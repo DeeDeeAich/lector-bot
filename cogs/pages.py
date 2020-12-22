@@ -25,7 +25,6 @@ class Pages(commands.Cog):
         self.help_page.description = '**Informational**'
         self.help_page.description += f'\n{pre}about - Bot information'
         self.help_page.description += f'\n{pre}help - Shows this help page'
-        self.help_page.description += f'\n{pre}mit - Shows the license of discord.py'
         self.help_page.description += '\n\n**Lectionaries**'
         self.help_page.description += f'\n{pre}[armenian|a|arm|armen]'
         self.help_page.description += f'\n{pre}[catholic|c|cath]'
@@ -45,32 +44,6 @@ class Pages(commands.Cog):
     @commands.command()
     async def help(self, ctx):
         await ctx.send(embed=self.help_page)
-    
-
-    @commands.command()
-    async def mit(self, ctx):
-        text  = 'discord.py license'
-        text += '```'
-        text += 'The MIT License (MIT)\n\n'
-        text += 'Copyright (c) 2015-2020 Rapptz\n\n'
-        text += 'Permission is hereby granted, free of charge, to any person obtaining a '
-        text += 'copy of this software and associated documentation files (the "Software"), '
-        text += 'to deal in the Software without restriction, including without limitation '
-        text += 'the rights to use, copy, modify, merge, publish, distribute, sublicense, '
-        text += 'and/or sell copies of the Software, and to permit persons to whom the '
-        text += 'Software is furnished to do so, subject to the following conditions:\n\n'
-        text += 'The above copyright notice and this permission notice shall be included in '
-        text += 'all copies or substantial portions of the Software.\n\n'
-        text += 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS '
-        text += 'OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, '
-        text += 'FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE '
-        text += 'AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER '
-        text += 'LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING '
-        text += 'FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER '
-        text += 'DEALINGS IN THE SOFTWARE.'
-        text += '```'
-
-        await ctx.send(text)
 
 
 def setup(bot):
