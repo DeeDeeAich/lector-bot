@@ -9,8 +9,6 @@ import datetime
 
 
 homepage_url    = 'https://lectionary.library.vanderbilt.edu/daily.php'
-rss_daily_url   = 'https://lectionary.library.vanderbilt.edu//feeds/lectionary-daily.xml'
-rss_weekly_url  = 'https://lectionary.library.vanderbilt.edu//feeds/lectionary.xml'
 
 
 class RevisedCommonLectionary:
@@ -18,54 +16,54 @@ class RevisedCommonLectionary:
         self.bible_version = 'nasb'
 
 
-    def _request_daily(self):
-        r = requests.get(rss_daily_url)
-        if r.status_code != 200: return {}
+    def _request_data(self):
+        today_sunday = (datetime.datetime.today().weekday() == 6)
+
+        if today_sunday:
+            url = 'https://lectionary.library.vanderbilt.edu//feeds/lectionary.xml'
+        else:
+            url = 'https://lectionary.library.vanderbilt.edu//feeds/lectionary-daily.xml'
         
-        raw      = r.text.replace('<![CDATA[','').replace(']]>','')
-        soup     = BeautifulSoup(raw, 'html.parser')
-        title    = soup.select_one('item > title').text
-        readings = soup.select_one('item > description > a').text.split('; ')
-
-        return {
-            'title'    : title,
-            'readings' : readings
-        }
-    
-
-    def _request_weekly(self):
-        r = requests.get(rss_weekly_url)
+        r = requests.get(url)
         if r.status_code != 200: return {}
 
-        soup = BeautifulSoup(r.text, 'html.parser')
+        if today_sunday: raw = r.text
+        else:            raw = r.text.replace('<![CDATA[','').replace(']]>','')
+
+        soup  = BeautifulSoup(raw, 'html.parser')
         title = soup.select_one('item > title').text
-        readings = soup.select_one('item > description').text.split(' * ')
+
+        if today_sunday:
+            readings = soup.select_one('item > description').text.split(' * ')
+        else:
+            readings = soup.select_one('item > description > a').text.split('; ')
 
         return {
-            'title'    : title,
-            'readings' : readings
+            'title'        : title,
+            'readings'     : readings,
+            'today_sunday' : today_sunday
         }
-    
+
 
     def build_embeds(self):
         '''
         Function to convert daily lectionary info to discord.py embed object
         '''
-        weekday = datetime.datetime.today().weekday()
 
-        if weekday == 6: # If today is Sunday
+        data = self._request_data()
+        # I need to add code here to catch if the data request failed
 
-            data = self._request_weekly()
-            # I need to add code here to catch if the data request failed
+        title        = data['title']
+        readings     = data['readings']
+        today_sunday = data['today_sunday']
 
-            title    = data['title']
-            readings = data['readings']
+        embed = Embed(title=title)
+        name, url = 'Revised Common Lectionary', 'https://lectionary.library.vanderbilt.edu/daily.php'
+        embed.set_author(name=name, url=url)
 
-            embed = Embed(title=data['title'])
-            name, url = 'Revised Common Lectionary', 'https://lectionary.library.vanderbilt.edu/daily.php'
-            embed.set_author(name=name, url=url)
-
+        if today_sunday:
             lines = []
+            
             for reading in readings:
                 options = reading.split(' or ')
 
@@ -80,24 +78,11 @@ class RevisedCommonLectionary:
                 lines.append(link)
 
             embed.description = "\n".join(lines)
-
-
-        else: # If today is any other day of the week
         
-            data = self._request_daily()
-            # I need to add code here to catch if the data request failed
-
-            title = data['title']
-            readings = data['readings']
-
-            embed = Embed(title=title)
-            name, url = 'Revised Common Lectionary', 'https://lectionary.library.vanderbilt.edu/daily.php'
-            embed.set_author(name=name,url=url)
-
+        else:
             embed.description = '\n'.join([
                 helpers.bible_url.convert(reading, self.bible_version)
                 for reading in readings
             ])
-
 
         return [embed]
