@@ -189,7 +189,7 @@ class Lectionary(commands.Cog):
             self.build_all_embeds()
 
     
-    @tasks.loop(hours=2)
+    @tasks.loop(hours=1)
     async def fufill_subscriptions(self):
         # Push the subscriptions between 3AM and 4AM
         if 3 <= datetime.datetime.now().hour < 4:
