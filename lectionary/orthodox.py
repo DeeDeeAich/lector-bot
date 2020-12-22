@@ -26,20 +26,9 @@ class OrthodoxLectionary:
         https://www.holytrinityorthodox.com/calendar/doc/examples/loadCalendar2.js
         '''
 
-        today = datetime.date.today()
-
-        url = 'https://www.holytrinityorthodox.com/calendar/doc/examples/ppp.php'
-        url +='?month=<mm>&today=<dd>&year=<yy>&dt=<dt>&header=<hh>&lives=<ll>&trp=<tt>&scripture=<ss>'
-        url = url.replace('<mm>', str(today.month))
-        url = url.replace('<dd>', str(today.day))
-        url = url.replace('<yy>', str(today.year))
-        url = url.replace('<dt>', '1')
-        url = url.replace('<hh>', '1')
-        url = url.replace('<ll>', '1')
-        url = url.replace('<tt>', '1')
-        url = url.replace('<ss>', '1')
-
-        return url
+        url  = 'https://www.holytrinityorthodox.com/calendar/doc/examples/ppp.php'
+        url += '?month=%m&today=%d&year=%Y&dt=1&header=1&lives=1&trp=1&scripture=1'
+        return datetime.datetime.today().strftime(url)
     
 
     def _request_data(self):
