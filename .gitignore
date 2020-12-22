@@ -1,5 +1,6 @@
 __pycache__
 config.json
-lector-env
 data.db
+lector-env
 TODO
+tester.py
