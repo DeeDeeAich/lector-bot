@@ -36,8 +36,11 @@ class OrthodoxLectionary:
         Helper method to fetch and scrape the webpage containing the calendar data.
         '''
 
-        r = requests.get(self._build_url())
+        url = self._build_url()
+
+        r = requests.get(url)
         if r.status_code != 200: return {}
+
         soup = BeautifulSoup(r.text, 'html.parser')
 
         # Title and subtitle
@@ -84,6 +87,7 @@ class OrthodoxLectionary:
             troparions[key] = value
 
         return {
+            'url'        : url,
             'title'      : title,
             'subtitles'  : subtitles,
             'saints'     : saints,
@@ -97,21 +101,22 @@ class OrthodoxLectionary:
         "Public" function to construct a list of Discord Embeds representing
         the calendar data.
         '''        
-
-        data = self._request_data()
-        # Add code to catch a failed data request
-
-        title      = data['title']
-        subtitles  = data['subtitles']
-        saints     = data['saints']
-        readings   = data['readings']
-        troparions = data['troparions']
-
+        try:
+            data       = self._request_data()
+            url        = data['url']
+            title      = data['title']
+            subtitles  = data['subtitles']
+            saints     = data['saints']
+            readings   = data['readings']
+            troparions = data['troparions']
+        except KeyError:
+            return []
+        
         embeds = []
 
         # Title Embed
         title_embed = Embed(title=title)
-        name, url = 'Orthodox Calendar', 'https://www.holytrinityorthodox.com/calendar/'
+        name        = 'Orthodox Calendar'
         title_embed.set_author(name=name, url=url)
         title_embed.description = '\n'.join(subtitles)
         embeds.append(title_embed)
