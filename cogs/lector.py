@@ -13,7 +13,8 @@ import datetime
 
 class Lectionary(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot         = bot
+        self.error_embed = discord.Embed(title='The lectionary could not be fetched', color=discord.Colour.red())
 
         # This list is for indexing-display purposes
         # In the database, 0 through 3 coorspond to these
@@ -51,24 +52,48 @@ class Lectionary(commands.Cog):
 
     @commands.command(aliases=['a', 'arm', 'armen'])
     async def armenian(self, ctx):
+        if self.armenian_embeds == []:
+            self.armenian_embeds  = self.armenian_lectionary.build_embeds()
+            if self.armenian_embeds == []:
+                await ctx.send(embed=self.error_embed)
+                return
+
         for embed in self.armenian_embeds:
             await ctx.send(embed=embed)
 
 
     @commands.command(aliases=['c', 'cath'])
     async def catholic(self, ctx):
+        if self.catholic_embeds == []:
+            self.catholic_embeds  = self.catholic_lectionary.build_embeds()
+            if self.catholic_embeds == []:
+                await ctx.send(embed=self.error_embed)
+                return
+
         for embed in self.catholic_embeds:
             await ctx.send(embed=embed)
 
 
     @commands.command(aliases=['o', 'orth', 'ortho'])
     async def orthodox(self, ctx):
+        if self.orthodox_embeds == []:
+            self.orthodox_embeds  = self.orthodox_lectionary.build_embeds()
+            if self.orthodox_embeds == []:
+                await ctx.send(embed=self.error_embed)
+                return
+
         for embed in self.orthodox_embeds:
             await ctx.send(embed=embed)
     
 
     @commands.command(aliases=['r', 'revised', 'prot', 'protestant'])
     async def rcl(self, ctx, arg:str=None):
+        if self.rcl_embeds == []:
+            self.rcl_embeds = self.rcl_lectionary.build_embeds()
+            if self.rcl_embeds == []:
+                await ctx.send(embed=self.error_embed)
+                return
+
         for embed in self.rcl_embeds:
             await ctx.send(embed=embed)
     
@@ -99,7 +124,6 @@ class Lectionary(commands.Cog):
         # Check to see if a subscription for the channel already exists
         c.execute('SELECT * FROM subscriptions WHERE channel_id = ?', (channel_id,))
         row = c.fetchone()
-
         sub_name = self.l[sub_type]
 
         if row:
@@ -107,27 +131,18 @@ class Lectionary(commands.Cog):
             if row[2] == sub_type:
                 # If the channel is already subscribed to what was requested
                 await ctx.send(f'<#{channel_id}> is already subscribed to the {sub_name} Lectionary.')
-                push_now = False
             else:
+                # If the subscription for a channel is changing from one lectionary to another
                 c.execute('UPDATE subscriptions SET sub_type = ? WHERE channel_id = ?', (sub_type, channel_id))
                 conn.commit()
                 await ctx.send(f'The subscription for <#{channel_id}> has been updated to the {sub_name} Lectionary.')
-                push_now = True
         else:
             # If a subscription does not exist for the channel
             c.execute('INSERT INTO subscriptions VALUES (?, ?, ?)', (server_id, channel_id, sub_type))
             conn.commit()
             await ctx.send(f'<#{channel_id}> has been subscribed to the {sub_name} Lectionary.')
-            push_now = True
 
         conn.close()
-
-        # If we want to push today's subscription, but it's after the regular time for pushing subscriptions
-        if push_now and datetime.datetime.today().hour >= 4:
-            feeds = [self.armenian_embeds, self.catholic_embeds, self.orthodox_embeds, self.rcl_embeds]
-            channel = self.bot.get_channel(channel_id)
-            for embed in feeds[sub_type]:
-                await channel.send(embed=embed)
 
 
     @commands.command(aliases=['unsub'])
@@ -202,9 +217,14 @@ class Lectionary(commands.Cog):
             for subscription in subscriptions:
                 channel_id, sub_type = subscription[1], subscription[2]
                 channel = self.bot.get_channel(channel_id)
+
+                # If channel exists and is accessible to the bot
                 if channel:
-                    for embed in feeds[sub_type]:
-                        await channel.send(embed=embed)
+                    if feeds[sub_type] != []:
+                        for embed in feeds[sub_type]:
+                            await channel.send(embed=embed)
+                    else:
+                        await channel.send(embed=self.error_embed)
                 else:
                     c.execute('DELETE FROM subscriptions WHERE channel_id = ?', (channel_id,))
                         
@@ -240,6 +260,12 @@ class Lectionary(commands.Cog):
     async def unsubscribe_error(error, ctx):
         if isinstance(error, MissingPermissions):
             await ctx.send('You need the manage messages perm to unsubscribe')
+
+
+    @subscriptions.error
+    async def subscriptions_error(error, ctx):
+        if isinstance(error, MissingPermissions):
+            await ctx.send('You need the manage messages perm to view server subscriptions')
     
 
 def setup(bot):
