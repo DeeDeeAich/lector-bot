@@ -100,17 +100,21 @@ class CatholicLectionary:
         Helper method to construct a list of Discord embeds based upon the
         data scraped from the daily readings webpages
         '''
-        today = datetime.date.today()
+
         pages = self._request_data()
 
+        today = datetime.date.today()
         embeds = []
 
         # For each of the pages that was scraped
         for page in pages:
-            url      = page['url']
-            title    = page['title']
-            sections = page['sections']
-            footer   = page['footer']
+            try:
+                url      = page['url']
+                title    = page['title']
+                sections = page['sections']
+                footer   = page['footer']
+            except KeyError:
+                return []
             
             embed = Embed(title=title)
             embed.set_author(name='Catholic Lectionary',url=url)
@@ -237,19 +241,3 @@ class CatholicLectionary:
                 break
         
         return reference
-    
-
-'''
-The _request_data() function will break down on certain Christian holidays
-because the format of the website changes. The Christman lectionary for has
-readings for different times of the day. I didn't try to implement the fix
-yet because it will involve more than just scraping a single page. It will
-have to finding links, following them, and make additional get requests.
-
-UPDATE: I've almost got this working for days that have multiple sets of
-readings. The only issues I'm experiencing come from a strange source -
-malformed title strings. Perhaps I'll scrape the title from the title HTML
-element instead of the body.
-
-UPDATE: Scraping from the title element worked as a one-liner. :P
-'''
