@@ -27,9 +27,7 @@ class RevisedCommonLectionary:
         r = requests.get(url)
         if r.status_code != 200: return {}
 
-        if today_sunday: raw = r.text
-        else:            raw = r.text.replace('<![CDATA[','').replace(']]>','')
-
+        raw   = r.text.replace('<![CDATA[','').replace(']]>','')
         soup  = BeautifulSoup(raw, 'html.parser')
         title = soup.select_one('item > title').text
 
@@ -49,13 +47,14 @@ class RevisedCommonLectionary:
         '''
         Function to convert daily lectionary info to discord.py embed object
         '''
-
-        data = self._request_data()
-        # I need to add code here to catch if the data request failed
-
-        title        = data['title']
-        readings     = data['readings']
-        today_sunday = data['today_sunday']
+        
+        try:
+            data         = self._request_data()
+            title        = data['title']
+            readings     = data['readings']
+            today_sunday = data['today_sunday']
+        except KeyError:
+            return []
 
         embed = Embed(title=title)
         name, url = 'Revised Common Lectionary', 'https://lectionary.library.vanderbilt.edu/daily.php'
