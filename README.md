@@ -1,6 +1,6 @@
+# Lector Bot
 ![version](https://img.shields.io/badge/version-alpha-%23ec4242) ![python](https://img.shields.io/badge/python-3.8.6-green) ![library](https://img.shields.io/badge/library-discord.py-blue)
 
-# Lector Bot
 A Discord bot for fetching and subscribing to various Christian lectionaries. There are 4 lectionaries currently implemented:
 1. [Armenian](https://vemkar.us/category/lectionary/)
 2. [Catholic](https://bible.usccb.org/)
