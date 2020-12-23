@@ -39,9 +39,10 @@ class CatholicLectionary:
             header = content_block.select_one('h3').text.strip()
             links = []
             for link in content_block.select('a'):
+                link = link.text.strip()
                 # If .strip() is removed, we also catch sections that don't have Bible references
-                if link.text.strip() != '':
-                    link = link.text.strip().replace('.','').replace(u'\xa0',u' ')         
+                if link != '':
+                    link = link.replace('.','').replace(u'\xa0',u' ').replace(' AND ',', ')
                     links.append(link)
             if links: sections[header] = ' or '.join(links)
 
@@ -230,10 +231,10 @@ class CatholicLectionary:
             'RV'     : 'Revelation'
         }
     
-        reference = reference.upper()
-
         for original in substitutions.keys():
-            reference = reference.replace(original, substitutions[original])
+            if reference.startswith(original):
+                reference = reference.replace(original, substitutions[original])
+                break
         
         return reference
     
