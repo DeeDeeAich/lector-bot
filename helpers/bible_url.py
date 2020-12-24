@@ -6,13 +6,15 @@ def convert(reference:str, version:str):
     Converts a given Bible reference & version into a neat Markdown link
     '''
     anchor = reference
-    results = re.findall(r'[0-9]+([a-zA-Z]+)', reference)
 
+    # Get rid of letter subreferences in verses
+    # Ex: '1 Samuel 2:8ABCD' is cleaned to '1 Samuel 2:8'
+    results = re.findall(r'[0-9]+([a-zA-Z]+)', reference)
     for result in results:
         reference = reference.replace(result, '')
         anchor    = anchor.replace(result, result.lower())
     
-    reference = reference.replace(' ', '+')
+    reference = reference.replace(' ', '+').lower()
     return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference}&version={version}&interface=print)'
 
 '''
