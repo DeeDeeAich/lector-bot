@@ -5,6 +5,7 @@ from discord import Embed
 from bs4 import BeautifulSoup
 
 import requests
+import re
 import datetime
 
 
@@ -55,23 +56,22 @@ class OrthodoxLectionary:
             for item in soup.select_one('span[class="normaltext"]').text.split('\n')
             if item]
 
-        # Readings Section - this is the tricky one
-        lines = [
-            item
-            for item in soup.select_one('span[class="normaltext"]:nth-child(5)').text.split('\n')
-            if item]
-        
-        refs = [
-            item.text
-            for item in soup.select('span[class="normaltext"]:nth-child(5) > a')]
+        # Readings Section
+        readings = soup.select_one('span[class="normaltext"]:nth-child(5)')
+        readings = [str(item) for item in readings.contents]
+        readings = ''.join(readings)
+        readings = readings.replace('\n','')
+        readings = readings.split('<br/>')
+        readings = [reading for reading in readings if reading != '']
 
-        added_info = [
-            line.replace(ref, '').strip()
-            for line, ref in zip(lines, refs)]
-        
-        readings = {}
-        for ref, info in zip(refs, added_info):
-            readings[ref] = info
+        for index, reading in enumerate(readings):
+            match = re.search(r'<a.*>(.*)<\/a>', reading)
+            if match:
+                # 'tag' looks like '<a>Matthew 5:11</a>'
+                # 'ref' looks like 'Matthew 5:11'
+                tag, ref = match.group(0), match.group(1)
+                link = helpers.bible_url.convert(ref, self.bible_version)
+                readings[index] = reading.replace(tag, link)
 
         # Troparion Section
             # keys represent the saint name and tone number
@@ -128,11 +128,7 @@ class OrthodoxLectionary:
 
         # Readings Embed
         scripture_embed = Embed(title='The Scripture Readings')
-        reading_lines = '\n'.join([
-            f'{helpers.bible_url.convert(key,self.bible_version)} {readings[key]}'
-            for key in readings.keys()
-        ])
-        scripture_embed.description = reading_lines
+        scripture_embed.description = '\n'.join(readings)
         embeds.append(scripture_embed)
 
         # Troparion Embed
