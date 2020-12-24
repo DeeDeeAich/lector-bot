@@ -17,7 +17,7 @@ class ArmenianLectionary:
 
     def _build_url(self):
         today = datetime.datetime.today()
-        return today.strftime(f'https://vemkar.us/%B-{today.day}-%Y')
+        return today.strftime('https://vemkar.us/%B-%e-%Y'.replace(' ',''))
 
 
     def _request_data(self):
@@ -27,7 +27,7 @@ class ArmenianLectionary:
         if r.status_code != 200: return {}
 
         soup     = BeautifulSoup(r.text, 'html.parser')
-        title    = soup.select('h2')[1].text.replace('\n',' ')
+        title    = soup.select('h2')[1].text
         readings = soup.select_one('h4[style]').text
         
         substitutions = {
