@@ -36,8 +36,7 @@ class Lectionary(commands.Cog):
         conn.commit()
         conn.close()
 
-        # Start up the event loops
-        self.update_embeds.start()
+        # Start up the event loop
         self.fufill_subscriptions.start()
 
     
@@ -195,19 +194,25 @@ class Lectionary(commands.Cog):
         await ctx.send(embed=embed)
 
 
-    '''TASK LOOPS'''
+    '''SYSTEM COMMAND'''
 
-    @tasks.loop(hours=1)
-    async def update_embeds(self):
-        # Update the embeds between 2AM and 3AM
-        if 2 <= datetime.datetime.now().hour < 3:
-            self.build_all_embeds()
+    @commands.command()
+    @commands.is_owner()
+    async def shutdown(self, ctx):
+        self.fufill_subscriptions.stop()
+        await ctx.message.add_reaction('✅')
+        await ctx.bot.close()
 
-    
+
+    '''TASK LOOP'''
+
     @tasks.loop(hours=1)
     async def fufill_subscriptions(self):
-        # Push the subscriptions between 3AM and 4AM
-        if 3 <= datetime.datetime.now().hour < 4:
+        # Push the subscriptions between 2AM and 3AM
+        if 2 <= datetime.datetime.now().hour < 3:
+            # Make sure the cached lectionary embeds are up-to-date
+            self.build_all_embeds()
+
             conn = sqlite3.connect('data.db')
             c    = conn.cursor()
             c.execute('SELECT * FROM subscriptions')
@@ -235,17 +240,6 @@ class Lectionary(commands.Cog):
     @fufill_subscriptions.before_loop
     async def before_fufill_subscriptions(self):
         await self.bot.wait_until_ready()
-
-
-    '''SYSTEM COMMANDS'''
-
-    @commands.command()
-    @commands.is_owner()
-    async def shutdown(self, ctx):
-        self.update_embeds.stop()
-        self.fufill_subscriptions.stop()
-        await ctx.message.add_reaction('✅')
-        await ctx.bot.close()
 
 
     '''ERROR HANDLERS'''
