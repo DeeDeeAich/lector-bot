@@ -1,11 +1,14 @@
 import re
 
 
-def convert(reference:str, version:str):
+def convert(reference:str, version:str='nasb'):
     '''
     Converts a given Bible reference & version into a neat Markdown link
     '''
     anchor = reference
+
+    reference = reference.replace('(','').replace(')','')
+    reference = reference.replace('[','').replace(']','')
 
     # Get rid of letter subreferences in verses
     # Ex: '1 Samuel 2:8ABCD' is cleaned to '1 Samuel 2:8'
