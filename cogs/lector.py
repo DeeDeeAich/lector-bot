@@ -15,7 +15,7 @@ class Lectionary(commands.Cog):
     def __init__(self, bot):
         self.bot         = bot
         self.error_embed = discord.Embed(title='The lectionary could not be fetched', color=discord.Colour.red())
-        self.last_fufill = datetime.datetime.today()
+        self.last_fufill = datetime.date.today()
 
         # This list is for indexing-display purposes
         # In the database, 0 through 3 coorspond to these
@@ -210,7 +210,7 @@ class Lectionary(commands.Cog):
     @tasks.loop(hours=1)
     async def fufill_subscriptions(self):
         # Push today's subscriptions on or after 2AM if they haven't been already
-        if self.last_fufill != datetime.datetime.today() and datetime.datetime.now().hour >= 2:
+        if self.last_fufill != datetime.date.today() and datetime.datetime.now().hour >= 2:
             # Make sure the cached lectionary embeds are updated
             self.build_all_embeds()
 
@@ -237,7 +237,7 @@ class Lectionary(commands.Cog):
             conn.commit()
             conn.close()
 
-            self.last_fufill = datetime.datetime.today()
+            self.last_fufill = datetime.date.today()
     
 
     @fufill_subscriptions.before_loop
