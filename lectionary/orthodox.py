@@ -103,8 +103,7 @@ class OrthodoxLectionary:
 
         # Title Embed
         title_embed = Embed(title=title)
-        name        = 'Orthodox Calendar'
-        title_embed.set_author(name=name, url=url)
+        title_embed.set_author(name='Orthodox Calendar', url=url)
         title_embed.description = '\n'.join(subtitles)
         embeds.append(title_embed)
         
