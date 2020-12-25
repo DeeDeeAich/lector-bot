@@ -110,6 +110,6 @@ class RevisedCommonLectionary:
                 continue
             else:
                 readings = '\n'.join(data[key])
-                embed.add_field(name=key, value=readings)
+                embed.add_field(name=key, value=readings, inline=False)
 
         return [embed]
