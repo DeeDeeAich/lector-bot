@@ -12,29 +12,16 @@ import datetime
 class OrthodoxLectionary:
     def __init__(self):
         self.bible_version = 'nrsv'
-    
+  
 
     def _build_url(self):
-        '''
-        The webservice that hosts the Orthodox Calendar works by accepting PHP
-        requests where the date of the day you want is encoded as arguments in
-        the URL. This helper method constructions a url for today's date.
+        today = datetime.datetime.today()
+        return f'https://www.holytrinityorthodox.com/calendar/calendar.php?month={today.month}&today={today.day}&year={today.year}&dt=1&header=1&lives=1&trp=1&scripture=1'
 
-        There is info here:
-        https://www.holytrinityorthodox.com/calendar/doc/index.htm
-
-        But I reverse engineered this javascript to find the exact url format:
-        https://www.holytrinityorthodox.com/calendar/doc/examples/loadCalendar2.js
-        '''
-
-        url  = 'https://www.holytrinityorthodox.com/calendar/doc/examples/ppp.php'
-        url += '?month=%m&today=%d&year=%Y&dt=1&header=1&lives=1&trp=1&scripture=1'
-        return datetime.datetime.today().strftime(url)
-    
 
     def _request_data(self):
         '''
-        Helper method to fetch and scrape the webpage containing the calendar data.
+        Helper method to scrape the webpage containing the calendar data.
         '''
 
         url = self._build_url()
