@@ -22,10 +22,10 @@ class Pages(commands.Cog):
         self.about_page.add_field(name='Liturgical Sources', value='\n'.join(sources))
 
         self.copyright_page = Embed(title='Copyright Notices')
-        self.copyright_page.add_field(name='Armenian Lectionary'      , value='The Liturgical Calendar of the Armenian Church (Lectionary), Copyright © 2017-2018 Vemkar.\n')
-        self.copyright_page.add_field(name='Catholic Lectionary'      , value='Lectionary for Mass for Use in the Dioceses of the United States, second typical edition, Copyright © 2001, 1998, 1997, 1986, 1970 Confraternity of Christian Doctrine; Psalm refrain © 1968, 1981, 1997, International Committee on English in the Liturgy, Inc. All rights reserved. Neither this work nor any part of it may be reproduced, distributed, performed or displayed in any medium, including electronic or digital, without permission in writing from the copyright owner.')
-        self.copyright_page.add_field(name='Orthodox Lectionary'      , value=datetime.datetime.today().strftime('Orthodox Calendar, Copyright © %Y Holy Trinity Russian Orthodox Church.'))
-        self.copyright_page.add_field(name='Revised Common Lectionary', value='Revised Common Lectionary, Copyright © 1992 Consultation on Common Texts. Used by permission.')
+        self.copyright_page.add_field(name='Armenian Lectionary'      , value='The Liturgical Calendar of the Armenian Church (Lectionary), Copyright © 2017-2018 Vemkar.\n', inline=False)
+        self.copyright_page.add_field(name='Catholic Lectionary'      , value='Lectionary for Mass for Use in the Dioceses of the United States, second typical edition, Copyright © 2001, 1998, 1997, 1986, 1970 Confraternity of Christian Doctrine; Psalm refrain © 1968, 1981, 1997, International Committee on English in the Liturgy, Inc. All rights reserved. Neither this work nor any part of it may be reproduced, distributed, performed or displayed in any medium, including electronic or digital, without permission in writing from the copyright owner.', inline=False)
+        self.copyright_page.add_field(name='Orthodox Lectionary'      , value=datetime.datetime.today().strftime('Orthodox Calendar, Copyright © %Y Holy Trinity Russian Orthodox Church.'), inline=False)
+        self.copyright_page.add_field(name='Revised Common Lectionary', value='Revised Common Lectionary, Copyright © 1992 Consultation on Common Texts. Used by permission.', inline=False)
 
         self.help_page = Embed(title='Command Help')
 
