@@ -14,3 +14,6 @@ A Discord bot for fetching and subscribing to various Christian lectionaries. Th
 ### Dependencies
 * [discord.py](https://github.com/Rapptz/discord.py)
 * [Beautiful Soup 4](https://www.crummy.com/software/BeautifulSoup/)
+
+### Copyright Notice
+The lectionaries are the works of their respective owners. This is non-commercial, educational software pursuant to [Section 107 of the Copyright Act](https://www.copyright.gov/title17/92chap1.html#107) of the United States. Notices and citations to the lectionaries have hence been included in the software ex fide bona.
