@@ -14,6 +14,28 @@ class RevisedCommonLectionary:
         self.bible_version = 'nasb'
 
 
+    def _explode_reference_list(self, text):
+        '''
+        This helper method takes in a common-separated list of Bible
+        references, and explodes it into a list where each reference
+        is independent
+        
+        For instance, 'John 1; Acts 7; 8' will get exploded to
+        ['John 1', 'Acts 7', 'Acts 8']
+        '''
+        pattern = r'(([0-9] )?[a-zA-Z]+[0-9 \-\:]+); ([0-9]+[^ ])'
+
+        expander = re.search(pattern, text)
+        while expander:
+            replacement = f'{expander.group(1)}<semicolon> {expander.group(3)}'
+            text = text.replace(expander.group(0), replacement)
+            expander = re.search(pattern, text)
+        
+        text = text.split('; ')
+        text = [item.replace('<semicolon>', ';') for item in text]
+        return text
+
+
     def _scrape_text_php(self, url):
         '''
         Instead of providing a list of references, the daily readings page
@@ -67,7 +89,7 @@ class RevisedCommonLectionary:
             # Listings that have an explicit list of readings
             match = re.search(r'<strong>(.*)<\/strong>: *<a href="http:.*>(.*)<\/a>', line)
             if match:
-                readings = match.group(2).split("; ")
+                readings = self._explode_reference_list(match.group(2))
                 readings = [helpers.bible_url.convert(reading) for reading in readings]
                 output[''] = readings
                 break
@@ -75,8 +97,8 @@ class RevisedCommonLectionary:
             # Listings that have semi-continuous and complementary readings
             match = re.search(r'<strong>(.*)<\/strong>: <br\/>Semi-continuous: <a.*>(.*)<\/a><br\/>Complementary: <a.*>(.*)<\/a>', line)
             if match:
-                output['Semi-continuous'] = [helpers.bible_url.convert(reading) for reading in match.group(2).split("; ")]
-                output['Complementary']   = [helpers.bible_url.convert(reading) for reading in match.group(3).split("; ")]
+                output['Semi-continuous'] = [helpers.bible_url.convert(reading) for reading in self._explode_reference_list(match.group(2))]
+                output['Complementary']   = [helpers.bible_url.convert(reading) for reading in self._explode_reference_list(match.group(3))]
                 break
 
             # Listings that link to another page for the readings
