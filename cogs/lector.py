@@ -207,7 +207,7 @@ class Lectionary(commands.Cog):
 
     '''TASK LOOP'''
 
-    @tasks.loop(hours=1)
+    @tasks.loop(minutes=10)
     async def fufill_subscriptions(self):
         # Push today's subscriptions on or after 2AM if they haven't been already
         if self.last_fufill != datetime.date.today() and datetime.datetime.now().hour >= 2:
