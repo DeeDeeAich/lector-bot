@@ -29,7 +29,7 @@ class Pages(commands.Cog):
 
         self.help_page = Embed(title='Command Help')
 
-        pre = '+'
+        pre = bot.command_prefix
 
         self.help_page.description = '**Informational**'
         self.help_page.description += f'\n{pre}about - Bot info'
