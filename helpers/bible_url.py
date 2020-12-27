@@ -1,7 +1,7 @@
 import re
 
 
-def convert(reference:str, version:str='nasb', interface:bool='False'):
+def convert(reference:str, version:str, interface:bool):
     '''
     Converts a given Bible reference & version into a neat Markdown link
     '''
