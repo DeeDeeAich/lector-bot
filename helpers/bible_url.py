@@ -1,7 +1,7 @@
 import re
 
 
-def convert(reference:str, version:str='nasb'):
+def convert(reference:str, version:str='nasb', interface:bool='False'):
     '''
     Converts a given Bible reference & version into a neat Markdown link
     '''
@@ -18,11 +18,8 @@ def convert(reference:str, version:str='nasb'):
         anchor    = anchor.replace(result, result.lower())
     
     reference = reference.replace(' ', '+').lower()
-    return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference}&version={version}&interface=print)'
 
-'''
-convert() will produce broken links if it is given a reference that is outside
-the given version. I plan on solving this when I implement a system to make
-sure a specific Bible version encommpasses all the books a given lectionary
-could potentially throw at it.
-'''
+    if interface: tail = '&interface=print'
+    else:         tail = ''
+    
+    return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference}&version={version}{tail})'
