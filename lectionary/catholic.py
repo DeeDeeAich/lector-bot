@@ -91,10 +91,6 @@ class CatholicLectionary:
         return output
 
 
-    def _build_bible_link(self, reference):
-        return bible_url.convert(self.expand_books(reference), self.bible_version)
-
-
     def build_embeds(self):
         '''
         Helper method to construct a list of Discord embeds based upon the
@@ -150,7 +146,7 @@ class CatholicLectionary:
         return embeds
     
 
-    def expand_books(self, reference):
+    def _build_bible_link(self, reference):
         substitutions = {
             'GN'     : 'Genesis',
             'EX'     : 'Exodus',
@@ -158,7 +154,7 @@ class CatholicLectionary:
             'NM'     : 'Numbers',
             'DT'     : 'Deuteronomy',
 
-            'Jos'    : 'Joshua',
+            'JOS'    : 'Joshua',
             'JGS'    : 'Judges',
             'RU'     : 'Ruth',
             '1 SM'   : '1 Samuel',
@@ -234,10 +230,11 @@ class CatholicLectionary:
             'JUDE'   : 'Jude',
             'RV'     : 'Revelation'
         }
-    
+
+        reference = reference.upper()
         for original in substitutions.keys():
-            if reference.startswith(original):
+            if f'{original} ' in reference:
                 reference = reference.replace(original, substitutions[original])
                 break
         
-        return reference
+        return bible_url.convert(reference, self.bible_version)
