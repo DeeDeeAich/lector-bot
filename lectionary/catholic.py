@@ -9,144 +9,69 @@ import re
 import datetime
 
 
-class CatholicLectionary:
-    def __init__(self):
-        self.bible_version = 'nrsv'
+class CatholicPage:
+    '''
+    A class that takes in the link, and possibly the raw HTML, for a Catholic
+    readings page, scrapes the key info, and uses this as its attributes
+    '''
 
+    def __init__(self, url, source_text=None):
+        self.url = url
 
-    def _build_permalink(self):
-        '''
-        Helper method to build a permalink to today's reading based upon the
-        website's URL structure
-        '''
-        return datetime.date.today().strftime('https://bible.usccb.org/bible/readings/%m%d%y.cfm')
+        if source_text is None:
+            r = requests.get(url)
+            if r.status_code != 200:
+                self.clear_data()
+                return
+            source_text = r.text
 
+        soup = BeautifulSoup(source_text, 'html.parser')
 
-    def _scrape_page(self, url, text):
-        '''
-        Helper method to scrape a daily reading page that is known not to
-        simply be a list of links.
-        '''
-
-        soup           = BeautifulSoup(text, 'html.parser')
-        title          = soup.title.text.replace(' | USCCB','')
-        footer         = soup.select_one('h2 ~ p').text.strip()
-        content_blocks = soup.select('.b-verse>div>div>div>div')
-
-        # This could be a double nested list comprehenion but meh
-        sections = {}
-        for content_block in content_blocks:
-            header = content_block.select_one('h3').text.strip()
-            links = []
-            for link in content_block.select('a'):
-                link = link.text.strip()
-                # If .strip() is removed, we also catch sections that don't have Bible references
-                if link != '':
-                    link = link.replace('.','').replace(u'\xa0',u' ').replace(' AND ',', ')
-                    links.append(link)
-            if links: sections[header] = ' or '.join(links)
-
-        return {
-            'url'      : url,
-            'title'    : title,
-            'sections' : sections,
-            'footer'   : footer
-        }
-    
-
-    def _request_data(self):
-        '''
-        Helper method that handles all the GET requests that are needed to get
-        the pages that contain the appropriate lectionary info.
-        '''
-
-        permalink = self._build_permalink()
-
-        r = requests.get(permalink)
-        if r.status_code != 200: return {}
-
-        soup = BeautifulSoup(r.text, 'html.parser')
-        content_blocks = soup.select('.b-verse>div>div>div>div')
-
-        # If the daily page is a standard readout
-        if len(content_blocks) > 1:
-            return [self._scrape_page(permalink, r.text)]
-
-        # Otherwise, the daily page is a list of links to other pages
-        # Each page is scraped for its own Discord embed
-        base_url = 'https://bible.usccb.org'
-        anchors = soup.select('div[class="content-body"]>ul>li>a')
-        output = []
-        for link in anchors:
-            link = link['href']
-
-            # If the link is relative, make it absolute
-            if 'https://' != link[:8]:
-                link = ''.join([base_url, link])
-
-            r = requests.get(link)
-            if r.status_code != 200: return {}
-            output.append(self._scrape_page(link, r.text))
-
-        return output
-
-
-    def build_embeds(self):
-        '''
-        Helper method to construct a list of Discord embeds based upon the
-        data scraped from the daily readings webpages
-        '''
-
-        pages = self._request_data()
+        self.title  = soup.title.text.replace(' | USCCB','')
+        self.footer = soup.select_one('h2 ~ p').text.strip()
 
         today = datetime.date.today()
-        embeds = []
+        # If the weekday name ('Monday', 'Tuesday', etc.) is not in the title
+        if today.strftime('%A') not in self.title:
+            self.desc = date_expand.expand(today)
+        else:
+            self.desc = date_expand.expand_no_weekday(today)
 
-        # For each of the pages that was scraped
-        for page in pages:
-            try:
-                url      = page['url']
-                title    = page['title']
-                sections = page['sections']
-                footer   = page['footer']
-            except KeyError:
-                return []
+        blocks = soup.select('.b-verse>div>div>div>div')
+        self.sections = {}
+        
+        for block in blocks:
+            header = block.select_one('h3').text.strip()
+
+            lines = []
+            for link in block.select('a'):
+                link = link.text.strip()
+                if link == '': continue
+                link = link.replace('.','').replace(u'\xa0',u' ').replace(' AND ',', ')
+                lines.append(link)
             
-            embed = Embed(title=title)
-            embed.set_author(name='Catholic Lectionary',url=url)
-            embed.set_footer(text=footer)
-
-            # If the weekday name ('Monday', 'Tuesday', etc.) is not in the title
-            if today.strftime('%A') not in title:
-                embed.description = date_expand.expand(today)
-            else: embed.description = date_expand.expand_no_weekday(today)
-
-            # For each lectionary section, ex: Reading 1, Responsorial Psalm, Reading 2, Alleluia, Gospel
-            for key in sections.keys():
-                # Generate a list of possible readings
-                verse_options = sections[key].split(' or ')
-
-                if len(verse_options) == 1: # If there was only one reading reference block in this section
-                    result = re.search(r'(.*) \(cited in (.*)\)', verse_options[0])
-                    if result: # Deals with cases that look like "Isaiah 61:1 (cited in Luke 4:18)"
-                        link = f'{self._build_bible_link(result.group(1))} (cited in {self._build_bible_link(result.group(2))})'
+            if len(lines) > 0:
+                for index, link in enumerate(lines):
+                    match = re.search(r'(.*) \(cited in (.*)\)', lines[index])
+                    if match:
+                        # Deals with cases that look like "Isaiah 61:1 (cited in Luke 4:18)"
+                        lines[index] = f'<a>{self._clean_ref(match.group(1))}</a> (cited in <a>{self._clean_ref(match.group(2))}</a>)'
                     else:
-                        link = self._build_bible_link(verse_options[0])
-                    embed.add_field(name=key, value=link, inline=False)
-                
-                else:
-                    links = ' or\n'.join([
-                        self._build_bible_link(reference)
-                        for reference in verse_options])
-                    embed.add_field(name=key, value=links, inline=False)
-            
-            # Build a single embed for each page
-            embeds.append(embed)
+                        lines[index] = f'<a>{self._clean_ref(lines[index])}</a>'
+                    
+                lines = ' or\n'.join(lines)
+                self.sections[header] = lines
 
-        return embeds
-    
 
-    def _build_bible_link(self, reference):
+    def clear_data(self):
+        self.url      = ''
+        self.title    = ''
+        self.desc     = ''
+        self.sections = {}
+        self.footer   = ''
+
+
+    def _clean_ref(self, reference):
         substitutions = {
             'GN'     : 'Genesis',
             'EX'     : 'Exodus',
@@ -237,4 +162,75 @@ class CatholicLectionary:
                 reference = reference.replace(original, substitutions[original])
                 break
         
-        return bible_url.convert(reference, self.bible_version)
+        return reference
+
+
+class CatholicLectionary:
+    def __init__(self):
+        self.regenerate_data()
+    
+
+    def clear_data(self):
+        self.pages = []
+
+
+    def regenerate_data(self):
+        '''
+        Helper method that handles all the GET requests that are needed to get
+        the pages that contain the appropriate lectionary info.
+        '''
+
+        permalink = datetime.date.today().strftime('https://bible.usccb.org/bible/readings/%m%d%y.cfm')
+        
+        r = requests.get(permalink)
+        if r.status_code != 200:
+            self.clear_data()
+            return
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+        blocks = soup.select('.b-verse>div>div>div>div')
+
+        # If the daily page is a standard readout
+        if len(blocks) > 1:
+            self.pages = [CatholicPage(permalink, r.text)]
+            return
+
+        # Otherwise, the daily page is a list of links to other pages
+        # Each page gets its own embed
+        base_url = 'https://bible.usccb.org'
+        anchors = soup.select('div[class="content-body"]>ul>li>a')
+        self.pages = []
+        for link in anchors:
+            link = link['href']
+
+            # If the link is relative, make it absolute
+            if 'https://' != link[:8]:
+                link = ''.join([base_url, link])
+
+            self.pages.append(CatholicPage(link))
+
+
+    def build_embeds(self, bible_version, view_mode):
+        '''
+        Helper method to construct a list of Discord embeds based upon the
+        data scraped from the daily readings webpages
+        '''
+        embeds = []
+
+        # For each page that was scraped
+        for page in self.pages:
+            embed = Embed(title=page.title)
+            embed.set_author(name='Catholic Lectionary', url=page.url)
+            embed.set_footer(text=page.footer)
+            embed.description = page.desc
+
+            # For each lectionary section on the page
+            # Ex: Reading 1, Responsorial Psalm, Reading 2, Alleluia, Gospel
+            for header in page.sections.keys():
+                value = bible_url.html_convert(page.sections[header], bible_version, view_mode)
+                embed.add_field(name=header, value=value, inline=False)
+            
+            # An embed for each page
+            embeds.append(embed)
+
+        return embeds
