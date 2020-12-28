@@ -1,14 +1,13 @@
 import re
 
 
-def convert(reference, view_mode):
+def convert(reference):
     '''
     Converts an individual Bible reference & version into a neat Markdown link
     '''
     anchor = reference
 
-    reference = reference.replace('(','').replace(')','')
-    reference = reference.replace('[','').replace(']','')
+    reference = reference.replace('(','').replace(')','').replace('[','').replace(']','')
 
     # Get rid of letter subreferences in verses
     # Ex: '1 Samuel 2:8ABCD' is cleaned to '1 Samuel 2:8'
@@ -18,15 +17,11 @@ def convert(reference, view_mode):
         anchor    = anchor.replace(result, result.lower())
     
     reference = reference.replace(' ', '+')
-
-    if view_mode == 'normal'  : tail = ''
-    elif view_mode == 'print' : tail = '&interface=print'
-    else                      : tail = ''
     
-    return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference}{tail})'
+    return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference})'
 
 
-def html_convert(text, view_mode):
+def html_convert(text):
     '''
     Converts a string with anchored Bible references to Markdown
 
@@ -35,6 +30,6 @@ def html_convert(text, view_mode):
     '''
     matches = re.findall(r'(<a>([^<>]*)<\/a>)', text)
     for match in matches:
-        text = text.replace(match[0], convert(match[1], view_mode))
+        text = text.replace(match[0], convert(match[1]))
     
     return text
