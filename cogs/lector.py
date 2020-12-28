@@ -41,6 +41,7 @@ class Lectionary(commands.Cog):
         conn.close()
 
         # Start up the event loop
+        self.last_fufill = datetime.date.today()
         self.fufill_subscriptions.start()
 
     
@@ -204,7 +205,7 @@ class Lectionary(commands.Cog):
     @tasks.loop(minutes=10)
     async def fufill_subscriptions(self):
         # Push today's subscriptions on or after 2AM if they haven't been already
-        if (self.last_fufill != datetime.date.today) and (datetime.datetime.now().hour >= 2):
+        if (self.last_fufill != datetime.date.today()) and (datetime.datetime.now().hour >= 2):
             # Make sure the cached lectionary embeds are updated
             self.regenerate_all_data()
             self.build_all_embeds()
