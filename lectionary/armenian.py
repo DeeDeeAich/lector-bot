@@ -1,5 +1,5 @@
-import helpers.bible_url
-import helpers.date_expand
+from helpers import bible_url
+from helpers import date_expand
 
 from discord import Embed
 from discord import Colour
@@ -12,60 +12,46 @@ import datetime
 
 class ArmenianLectionary:
     def __init__(self):
-        self.bible_version = "nrsv"
+        self.regenerate_data()
+    
+
+    def clear_data(self):
+        self.url      = ''
+        self.title    = ''
+        self.desc     = ''
+        self.readings = ''
 
 
-    def _build_url(self):
-        today = datetime.datetime.today()
-        return today.strftime('https://vemkar.us/%B-%e-%Y'.replace(' ',''))
+    def regenerate_data(self):
+        self.url = datetime.datetime.today().strftime('https://vemkar.us/%B-%e-%Y'.replace(' ',''))
 
-
-    def _request_data(self):
-        url = self._build_url()
-
-        r = requests.get(url)
-        if r.status_code != 200: return {}
-
-        soup     = BeautifulSoup(r.text, 'html.parser')
-        title    = soup.select('h2')[1].text
-        readings = soup.select_one('h4[style]').text
+        r = requests.get(self.url)
+        if r.status_code != 200:
+            self.clear_data()
+            return
         
-        substitutions = {
-            'II ' : '2 ',
-            'I '  : '1 '
-        }
+        soup = BeautifulSoup(r.text, 'html.parser')
 
+        self.title = soup.select('h2')[1].text
+        self.desc  = date_expand.expand(datetime.date.today())
+
+        readings = soup.select_one('h4[style]').text
+
+        substitutions = {'III ':'3 ','II ':'2 ','I ':'1 '}
         for original in substitutions.keys():
             readings = readings.replace(original, substitutions[original])
-
-        readings = readings.split('\n')
-
-        return {
-            'url'      : url,
-            'title'    : title,
-            'readings' : readings
-        }
-
-
-    def build_embeds(self):
-        try:
-            data     = self._request_data()
-            url      = data['url']
-            title    = data['title']
-            readings = data['readings']
-        except KeyError:
-            return []
-
-        embed = Embed(title=title)
-        embed.set_author(name='Armenian Lectionary', url=url)
-
-        today = datetime.date.today()
-        embed.description = helpers.date_expand.expand(today)
         
-        temp = '\n'.join([
-            helpers.bible_url.convert(reading, self.bible_version)
-            for reading in readings
-        ])
-        embed.add_field(name='Readings', value=temp)
+        readings = readings.split('\n')
+        readings = [f'<a>{reading}</a>' for reading in readings]
+        readings = '\n'.join(readings)
+
+        self.readings = readings
+
+
+    def build_embeds(self, bible_version, view_mode):
+        embed = Embed(title=self.title)
+        embed.set_author(name='Armenian Lectionary', url=self.url)
+        embed.description = self.desc
+        embed.add_field(name='Readings', value=bible_url.html_convert(self.readings, bible_version, view_mode))
 
         return [embed]
