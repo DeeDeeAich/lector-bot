@@ -124,7 +124,7 @@ class RevisedCommonLectionary:
         return readings
 
 
-    def build_embeds(self, view_mode):
+    def build_embeds(self):
         '''
         Function to convert daily lectionary info to discord.py Embed
         '''
@@ -133,9 +133,9 @@ class RevisedCommonLectionary:
 
         for key in self.sections.keys():
             if key == '':
-                embed.description = bible_url.html_convert(self.sections[''], view_mode)
+                embed.description = bible_url.html_convert(self.sections[''])
             else:
-                value = bible_url.html_convert(self.sections[key], view_mode)
+                value = bible_url.html_convert(self.sections[key])
                 embed.add_field(name=key, value=value, inline=False)
 
         return [embed]

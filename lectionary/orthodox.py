@@ -76,7 +76,7 @@ class OrthodoxLectionary:
             self.troparion[key] = value
     
 
-    def build_embeds(self, view_mode):
+    def build_embeds(self):
         '''
         "Public" function to construct a list of Discord Embeds representing
         the calendar data.
@@ -97,7 +97,7 @@ class OrthodoxLectionary:
 
         # Readings Embed
         embed = Embed(title='The Scripture Readings')
-        embed.description = bible_url.html_convert(self.readings, view_mode)
+        embed.description = bible_url.html_convert(self.readings)
         embeds.append(embed)
 
         # Troparion Embed
