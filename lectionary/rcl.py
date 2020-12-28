@@ -17,7 +17,6 @@ class RevisedCommonLectionary:
     def clear_data(self):
         self.url         = ''
         self.title       = ''
-        self.year_letter = ''
         self.sections    = {}
 
 
@@ -50,8 +49,8 @@ class RevisedCommonLectionary:
 
         soup = BeautifulSoup(r.text, 'html.parser')
 
-        self.year_letter = soup.select_one('[id="main_text"]>h2').text[-1]
-        self.title = f'Daily Readings for {date_expand.expand(datetime.datetime.today())} (Year {self.year_letter})'
+        self.title  = f'Daily Readings for {date_expand.expand(datetime.datetime.today())}'
+        self.title += f' (Year {soup.select_one("[id=main_text]>h2").text[-1]})'
 
         lines = soup.select('ul[class="daily_day"]>li')
 
