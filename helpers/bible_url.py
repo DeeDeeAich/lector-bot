@@ -1,7 +1,7 @@
 import re
 
 
-def convert(reference, bible_version, view_mode):
+def convert(reference, view_mode):
     '''
     Converts an individual Bible reference & version into a neat Markdown link
     '''
@@ -23,10 +23,10 @@ def convert(reference, bible_version, view_mode):
     elif view_mode == 'print' : tail = '&interface=print'
     else                      : tail = ''
     
-    return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference}&version={bible_version}{tail})'
+    return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference}{tail})'
 
 
-def html_convert(text, bible_version, view_mode):
+def html_convert(text, view_mode):
     '''
     Converts a string with anchored Bible references to Markdown
 
@@ -35,6 +35,6 @@ def html_convert(text, bible_version, view_mode):
     '''
     matches = re.findall(r'(<a>([^<>]*)<\/a>)', text)
     for match in matches:
-        text = text.replace(match[0], convert(match[1], bible_version, view_mode))
+        text = text.replace(match[0], convert(match[1], view_mode))
     
     return text
