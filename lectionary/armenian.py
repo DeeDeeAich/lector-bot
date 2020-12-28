@@ -48,10 +48,10 @@ class ArmenianLectionary:
         self.readings = readings
 
 
-    def build_embeds(self, bible_version, view_mode):
+    def build_embeds(self, view_mode):
         embed = Embed(title=self.title)
         embed.set_author(name='Armenian Lectionary', url=self.url)
         embed.description = self.desc
-        embed.add_field(name='Readings', value=bible_url.html_convert(self.readings, bible_version, view_mode))
+        embed.add_field(name='Readings', value=bible_url.html_convert(self.readings, view_mode))
 
         return [embed]

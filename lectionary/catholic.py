@@ -210,7 +210,7 @@ class CatholicLectionary:
             self.pages.append(CatholicPage(link))
 
 
-    def build_embeds(self, bible_version, view_mode):
+    def build_embeds(self, view_mode):
         '''
         Helper method to construct a list of Discord embeds based upon the
         data scraped from the daily readings webpages
@@ -227,7 +227,7 @@ class CatholicLectionary:
             # For each lectionary section on the page
             # Ex: Reading 1, Responsorial Psalm, Reading 2, Alleluia, Gospel
             for header in page.sections.keys():
-                value = bible_url.html_convert(page.sections[header], bible_version, view_mode)
+                value = bible_url.html_convert(page.sections[header], view_mode)
                 embed.add_field(name=header, value=value, inline=False)
             
             # An embed for each page
