@@ -1,9 +1,9 @@
 import re
 
 
-def convert(reference:str, version:str, interface:bool):
+def convert(reference, bible_version, view_mode):
     '''
-    Converts a given Bible reference & version into a neat Markdown link
+    Converts an individual Bible reference & version into a neat Markdown link
     '''
     anchor = reference
 
@@ -19,7 +19,22 @@ def convert(reference:str, version:str, interface:bool):
     
     reference = reference.replace(' ', '+').lower()
 
-    if interface: tail = '&interface=print'
-    else:         tail = ''
+    if view_mode == 'normal'  : tail = ''
+    elif view_mode == 'print' : tail = '&interface=print'
+    else                      : tail = ''
     
-    return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference}&version={version}{tail})'
+    return f'[{anchor}](https://www.biblegateway.com/passage/?search={reference}&version={bible_version}{tail})'
+
+
+def html_convert(text, bible_version, view_mode):
+    '''
+    Converts a string with anchored Bible references to Markdown
+
+    In: "God creates everything in <a>Genesis 1:1</a>"
+    Out: "God creates everything in [Genesis 1:1](https://www.blahblah.com)
+    '''
+    matches = re.findall(r'(<a>([^<>]*)<\/a>)', text)
+    for match in matches:
+        text = text.replace(match[0], convert(match[1], bible_version, view_mode))
+    
+    return text
