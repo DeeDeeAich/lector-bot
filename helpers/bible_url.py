@@ -17,7 +17,7 @@ def convert(reference, bible_version, view_mode):
         reference = reference.replace(result, '')
         anchor    = anchor.replace(result, result.lower())
     
-    reference = reference.replace(' ', '+').lower()
+    reference = reference.replace(' ', '+')
 
     if view_mode == 'normal'  : tail = ''
     elif view_mode == 'print' : tail = '&interface=print'
