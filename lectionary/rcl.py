@@ -1,5 +1,5 @@
-import helpers.bible_url
-import helpers.date_expand
+from helpers import bible_url
+from helpers import date_expand
 
 from bs4 import BeautifulSoup
 from discord import Embed
@@ -11,7 +11,14 @@ import datetime
 
 class RevisedCommonLectionary:
     def __init__(self):
-        self.bible_version = 'nasb'
+        self.regenerate_data()
+    
+
+    def clear_data(self):
+        self.url         = ''
+        self.title       = ''
+        self.year_letter = ''
+        self.sections    = {}
 
 
     def _explode_reference_list(self, text):
@@ -31,10 +38,68 @@ class RevisedCommonLectionary:
             text = text.replace(expander.group(0), replacement)
             expander = re.search(pattern, text)
         
-        text = text.split('; ')
-        text = [item.replace('<semicolon>', ';') for item in text]
-        return text
+        return [item.replace('<semicolon>', ';') for item in text.split('; ')]
 
+
+    def regenerate_data(self):
+        self.url = 'https://lectionary.library.vanderbilt.edu/daily.php'
+        r = requests.get(self.url)
+        if r.status_code != 200:
+            self.clear_data()
+            return
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        self.year_letter = soup.select_one('[id="main_text"]>h2').text[-1]
+        self.title = f'Daily Readings for {date_expand.expand(datetime.datetime.today())} (Year {self.year_letter})'
+
+        lines = soup.select('ul[class="daily_day"]>li')
+
+        # Generate the regex pattern matching today's date
+        today = datetime.date.today()
+        check = today.strftime(f'%B.* {today.day}[^0-9].*%Y')
+        
+        self.sections = {}
+        got_today = False
+        for line in lines:
+            line = [str(item) for item in line.contents]
+            line = ''.join(line).replace('&amp;','&')
+
+            # If the entry is not for today
+            if not re.search(check, line):
+                if got_today: break
+                continue
+            got_today = True
+
+            # Listings with explicit list of readings
+            match = re.search(r'<strong>(.*)<\/strong>: *<a href="http:.*>(.*)<\/a>', line)
+            if match:
+                readings = self._explode_reference_list(match.group(2))
+                readings = '\n'.join([f'<a>{reading}</a>' for reading in readings])
+                self.sections[''] = readings
+                break
+                
+            # Listings with semi-continuous & complementary 
+            match = re.search(r'<strong>(.*)<\/strong>: <br\/>Semi-continuous: <a.*>(.*)<\/a><br\/>Complementary: <a.*>(.*)<\/a>', line)
+            if match:
+                self.sections['Semi-continuous'] = ''.join([
+                    f'<a>{reading}</a>'
+                    for reading in self._explode_reference_list(match.group(2))
+                ])
+            
+                self.sections['Complementary'] = ''.join([
+                    f'<a>{reading}</a>'
+                    for reading in self._explode_reference_list(match.group(3))
+                ])
+
+                break
+                
+            # Listings that link to another page for the readings
+            match = re.search(r'<strong>(.*)<\/strong>: *<strong><a href="(.*)">(.*)<\/a><\/strong>', line)
+            if match:
+                fetched = self._scrape_text_php(f'https://lectionary.library.vanderbilt.edu/{match.group(2)}')
+                self.sections[match[3]] = fetched
+    
 
     def _scrape_text_php(self, url):
         '''
@@ -53,85 +118,25 @@ class RevisedCommonLectionary:
         links = readings.replace(' and ',';').replace(' or ',';').replace('\xa0\xa0•\xa0', ';').split(';')
 
         for link in links:
-            readings = readings.replace(link, helpers.bible_url.convert(link))
+            readings = readings.replace(link, f'<a>{link}</a>')
         
-        readings = readings.split('\xa0\xa0•\xa0')
+        readings = readings.replace('\xa0\xa0•\xa0', '\n')
 
         return readings
 
 
-    def _request_data(self):
-        url = 'https://lectionary.library.vanderbilt.edu/daily.php'
-
-        r = requests.get(url)
-        if r.status_code != 200: return {}
-
-        soup = BeautifulSoup(r.text, 'html.parser')
-        lines = soup.select('ul[class="daily_day"]>li')
-
-        # Generate the regex pattern matching today's date
-        today = datetime.datetime.today()
-        check = today.strftime(f'%B.* {today.day}[^0-9].*%Y')
-
-        got_today = False
-        output = {'year_letter': soup.select_one('[id="main_text"]>h2').text[-1]}
-
-        for line in lines:
-            line = [str(item) for item in line.contents]
-            line = ''.join(line).replace('&amp;','&')
-
-            # If the entry is not for today
-            if not re.search(check, line):
-                if got_today: break
-                continue
-            got_today = True
-
-            # Listings that have an explicit list of readings
-            match = re.search(r'<strong>(.*)<\/strong>: *<a href="http:.*>(.*)<\/a>', line)
-            if match:
-                readings = self._explode_reference_list(match.group(2))
-                readings = [helpers.bible_url.convert(reading) for reading in readings]
-                output[''] = readings
-                break
-
-            # Listings that have semi-continuous and complementary readings
-            match = re.search(r'<strong>(.*)<\/strong>: <br\/>Semi-continuous: <a.*>(.*)<\/a><br\/>Complementary: <a.*>(.*)<\/a>', line)
-            if match:
-                output['Semi-continuous'] = [helpers.bible_url.convert(reading) for reading in self._explode_reference_list(match.group(2))]
-                output['Complementary']   = [helpers.bible_url.convert(reading) for reading in self._explode_reference_list(match.group(3))]
-                break
-
-            # Listings that link to another page for the readings
-            match = re.search(r'<strong>(.*)<\/strong>: *<strong><a href="(.*)">(.*)<\/a><\/strong>', line)
-            if match:
-                fetched_readings = self._scrape_text_php(f'https://lectionary.library.vanderbilt.edu/{match.group(2)}')
-                if fetched_readings == {}: return {}
-                output[match.group(3)] = self._scrape_text_php(f'https://lectionary.library.vanderbilt.edu/{match.group(2)}')
-        
-        return output
-
-
-
-    def build_embeds(self):
+    def build_embeds(self, bible_version, view_mode):
         '''
         Function to convert daily lectionary info to discord.py Embed
         '''
-        data = self._request_data()
-        if data == {}: return []
+        embed = Embed(title=self.title)
+        embed.set_author(name='Revised Common Lectionary', url=self.url)
 
-        date_string = helpers.date_expand.expand(datetime.datetime.today())
-        embed = Embed(title=f'Daily Readings for {date_string} (Year {data["year_letter"]})')
-        name, url = 'Revised Common Lectionary', 'https://lectionary.library.vanderbilt.edu/daily.php'
-        embed.set_author(name=name, url=url)
-
-        for key in data.keys():
+        for key in self.sections.keys():
             if key == '':
-                embed.description = '\n'.join(data[''])
-                break
-            elif key == 'year_letter':
-                continue
+                embed.description = bible_url.html_convert(self.sections[''], bible_version, view_mode)
             else:
-                readings = '\n'.join(data[key])
-                embed.add_field(name=key, value=readings, inline=False)
+                value = bible_url.html_convert(self.sections[key], bible_version, view_mode)
+                embed.add_field(name=key, value=value, inline=False)
 
         return [embed]
