@@ -4,12 +4,10 @@ suffixes = {'0':'th','1':'st','2':'nd','3':'rd','4':'th','5':'th','6':'th','7':'
 
 def expand(dateobject):
     '''Given a date object, returns a specially formatted string representing it w/ the weekday'''
-    day = str(dateobject.day)[-1]
-    suffix = suffixes[day]
-    return dateobject.strftime(f'%A, %B %d{suffix}, %Y')
+    suffix = suffixes[str(dateobject.day)[-1]]
+    return dateobject.strftime(f'%A, %B {dateobject.day}{suffix}, %Y')
 
 def expand_no_weekday(dateobject):
     '''Given a date object, returns a specially formatted string representing it w/o the weekday'''
-    day = str(dateobject.day)[-1]
-    suffix = suffixes[day]
-    return dateobject.strftime(f'%B %d{suffix}, %Y')
+    suffix = suffixes[str(dateobject.day)[-1]]
+    return dateobject.strftime(f'%B {dateobject.day}{suffix}, %Y')
