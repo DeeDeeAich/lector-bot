@@ -198,6 +198,32 @@ class Lectionary(commands.Cog):
         self.fufill_subscriptions.stop()
         await ctx.message.add_reaction('✅')
         await ctx.bot.close()
+    
+
+    @commands.command()
+    @commands.is_owner()
+    async def push(self):
+        # Make sure the cached lectionary embeds are updated
+        self.regenerate_all_data()
+        self.build_all_embeds()
+
+        conn = sqlite3.connect('data.db')
+        c    = conn.cursor()
+        c.execute('SELECT * FROM subscriptions')
+        subscriptions = c.fetchall()
+
+        for subscription in subscriptions:
+            channel  = self.bot.get_channel(subscription[1])
+            sub_type = subscription[2]
+
+            if channel:
+                for embed in self.feeds[sub_type]:
+                    await channel.send(embed=embed)
+            else:
+                c.execute('DELETE FROM subscriptions WHERE channel_id = ?', (channel_id,))
+        
+        conn.commit()
+        conn.close()
 
 
     '''TASK LOOP'''
@@ -206,28 +232,7 @@ class Lectionary(commands.Cog):
     async def fufill_subscriptions(self):
         # Push today's subscriptions on or after 2AM if they haven't been already
         if (self.last_fufill != datetime.date.today()) and (datetime.datetime.now().hour >= 2):
-            # Make sure the cached lectionary embeds are updated
-            self.regenerate_all_data()
-            self.build_all_embeds()
-
-            conn = sqlite3.connect('data.db')
-            c    = conn.cursor()
-            c.execute('SELECT * FROM subscriptions')
-            subscriptions = c.fetchall()
-
-            for subscription in subscriptions:
-                channel  = self.bot.get_channel(subscription[1])
-                sub_type = subscription[2]
-
-                if channel:
-                    for embed in self.feeds[sub_type]:
-                        await channel.send(embed=embed)
-                else:
-                    c.execute('DELETE FROM subscriptions WHERE channel_id = ?', (channel_id,))
-                        
-            conn.commit()
-            conn.close()
-
+            await self.push()
             self.last_fufill = datetime.date.today()
     
 
