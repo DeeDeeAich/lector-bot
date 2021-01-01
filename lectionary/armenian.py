@@ -23,7 +23,8 @@ class ArmenianLectionary:
 
 
     def regenerate_data(self):
-        self.url = datetime.datetime.today().strftime('https://vemkar.us/%B-%e-%Y'.replace(' ',''))
+        today = datetime.date.today()
+        self.url = datetime.datetime.today().strftime(f'https://vemkar.us/%B-{today.day}-%Y')
 
         r = requests.get(self.url)
         if r.status_code != 200:
