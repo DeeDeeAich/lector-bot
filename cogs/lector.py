@@ -195,6 +195,10 @@ class Lectionary(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def shutdown(self, ctx):
+        '''
+        Command to safely shutdown the bot with a reduced chance of
+        damaging the database. (Bot owner only.)
+        '''
         self.fufill_subscriptions.stop()
         await ctx.message.add_reaction('✅')
         await ctx.bot.close()
@@ -202,7 +206,14 @@ class Lectionary(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def push(self):
+    async def push(self, ctx):
+        '''
+        Push subscriptions manually. (Bot owner only.)
+        '''
+        await self.push_subscriptions()
+
+
+    async def push_subscriptions(self):
         # Make sure the cached lectionary embeds are updated
         self.regenerate_all_data()
         self.build_all_embeds()
@@ -232,7 +243,7 @@ class Lectionary(commands.Cog):
     async def fufill_subscriptions(self):
         # Push today's subscriptions on or after 2AM if they haven't been already
         if (self.last_fufill != datetime.date.today()) and (datetime.datetime.now().hour >= 2):
-            await self.push()
+            await self.push_subscriptions()
             self.last_fufill = datetime.date.today()
     
 
