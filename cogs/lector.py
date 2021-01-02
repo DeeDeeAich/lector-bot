@@ -224,8 +224,9 @@ class Lectionary(commands.Cog):
         subscriptions = c.fetchall()
 
         for subscription in subscriptions:
-            channel  = self.bot.get_channel(subscription[1])
-            sub_type = subscription[2]
+            channel_id = subscription[1]
+            channel    = self.bot.get_channel(channel_id)
+            sub_type   = subscription[2]
 
             if channel:
                 for embed in self.feeds[sub_type]:
