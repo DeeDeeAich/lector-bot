@@ -48,6 +48,12 @@ class CatholicPage:
                 link = link.text.strip()
                 if link == '': continue
                 link = link.replace('.','').replace(u'\xa0',u' ').replace(' AND ',', ')
+                
+                # If a reference in the Responsorial Psalm section does not
+                # include "Ps", insert it at the beginning
+                if (header == 'Responsorial Psalm') and (not link.startswith('Ps')):
+                    link = 'Ps ' + link
+
                 lines.append(link)
             
             if len(lines) > 0:
