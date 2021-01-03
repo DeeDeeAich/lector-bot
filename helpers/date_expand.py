@@ -11,3 +11,14 @@ def expand_no_weekday(dateobject):
     '''Given a date object, returns a specially formatted string representing it w/o the weekday'''
     suffix = suffixes[str(dateobject.day)[-1]]
     return dateobject.strftime(f'%B {dateobject.day}{suffix}, %Y')
+
+def auto_expand(dateobject, text):
+    '''
+    If some text does not contain the weekday, generate a datestamp
+    that *does* contain the weekday. If the text contains it, the
+    datestamp should not contain it
+    '''
+    if dateobject.strftime('%A') not in text:
+        return expand(dateobject)
+    else:
+        return expand_no_weekday(dateobject)
