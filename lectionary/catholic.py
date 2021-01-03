@@ -31,11 +31,7 @@ class CatholicPage:
         self.footer = soup.select_one('h2 ~ p').text.strip()
 
         today = datetime.date.today()
-        # If the weekday name ('Monday', 'Tuesday', etc.) is not in the title
-        if today.strftime('%A') not in self.title:
-            self.desc = date_expand.expand(today)
-        else:
-            self.desc = date_expand.expand_no_weekday(today)
+        self.desc = date_expand.auto_expand(today, self.title)
 
         blocks = soup.select('.b-verse>div>div>div>div')
         self.sections = {}
