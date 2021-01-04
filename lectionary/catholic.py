@@ -57,7 +57,12 @@ class CatholicPage:
                     match = re.search(r'(.*) \(cited in (.*)\)', lines[index])
                     if match:
                         # Deals with cases that look like "Isaiah 61:1 (cited in Luke 4:18)"
-                        lines[index] = f'<a>{self._clean_ref(match.group(1))}</a> (cited in <a>{self._clean_ref(match.group(2))}</a>)'
+                        first  = self._clean_ref(match.group(1))
+                        second = self._clean_ref(match.group(2))
+                        lines[index] = f'<a>{first}</a> (cited in <a>{second}</a>)'
+                    elif link.startswith('See '):
+                        new = lines[index][4:]
+                        lines[index] = f'See <a>{self._clean_ref(new)}</a>'
                     else:
                         lines[index] = f'<a>{self._clean_ref(lines[index])}</a>'
                     
