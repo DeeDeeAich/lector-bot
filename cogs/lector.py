@@ -173,11 +173,11 @@ class Lectionary(commands.Cog):
 
         # Check to see if a subscription for the channel already exists
         c.execute('SELECT * FROM Subscriptions WHERE channel_id = ?', (channel_id,))
-        row = c.fetchone()
+        row      = c.fetchone()
+        sub_name = self.lectionary_names[sub_type].title()
         if row:
-            # If channel subscription request would not actually change any settings
             if (row[2] == sub_type):
-                sub_name = self.lectionary_names[sub_type].title()
+                # If channel subscription request would not actually change any settings
                 await ctx.send(f'<#{channel_id}> is already subscribed to the {sub_name} Lectionary.')
             else:
                 # If the channel's subscription is changing somehow
@@ -262,8 +262,8 @@ class Lectionary(commands.Cog):
             embed.description = ''
             for subscription in subscriptions:
                 channel_id      = subscription[1]
-                lectionary_name = self.lectionary_names[subscription[2]].title()
-                embed.description += f'\n<#{channel_id}> - {lectionary_name} Lectionary'
+                sub_name        = self.lectionary_names[subscription[2]].title()
+                embed.description += f'\n<#{channel_id}> - {sub_name} Lectionary'
 
             embed.set_footer(text=f'(Daily @ {time}:00 GMT)')
         else:
