@@ -16,10 +16,11 @@ class ArmenianLectionary:
     
 
     def clear_data(self):
-        self.url      = ''
-        self.title    = ''
-        self.desc     = ''
-        self.readings = ''
+        self.url       = ''
+        self.title     = ''
+        self.desc      = ''
+        self.readings  = ''
+        self.notes_url = ''
 
 
     def regenerate_data(self):
@@ -34,7 +35,7 @@ class ArmenianLectionary:
         soup = BeautifulSoup(r.text, 'html.parser')
 
         self.title = soup.select('h2')[1].text
-        self.desc  = date_expand.expand(datetime.date.today())
+        self.desc  = date_expand.auto_expand(datetime.date.today(), self.title)
 
         readings = soup.select_one('h4[style]').text
 
@@ -48,11 +49,29 @@ class ArmenianLectionary:
 
         self.readings = readings
 
+        # Get pages with additional lectionary notes, if they exist
+        r = requests.get(today.strftime(f'https://vemkar.us/%B-{today.day}-%Y'))
+        if r.status_code != 200:
+            self.notes_url = ''
+            return
+        
+        # If there was no redirect, this is a unique resource
+        if (len(r.history) == 0):
+            soup = BeautifulSoup(r.text, 'html.parser')
+            self.notes_url = soup.select_one("p[class='attachment']>a")['href']
+        # If there was a redirect, everything was already scraped
+        else:
+            self.notes_url = ''
+
 
     def build_embeds(self):
         embed = Embed(title=self.title)
         embed.set_author(name='Armenian Lectionary', url=self.url)
         embed.description = self.desc
-        embed.add_field(name='Readings', value=bible_url.html_convert(self.readings))
+
+        temp = bible_url.html_convert(self.readings)
+        if self.notes_url != '':
+            temp += f"\n\n*[Notes]({self.notes_url})"
+        embed.add_field(name='Readings', value=temp, inline=False)
 
         return [embed]
