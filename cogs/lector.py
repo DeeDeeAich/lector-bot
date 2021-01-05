@@ -1,13 +1,14 @@
-from lectionary import armenian
-from lectionary import catholic
-from lectionary import orthodox
-from lectionary import rcl
+from lectionary.armenian import ArmenianLectionary
+from lectionary.catholic import CatholicLectionary
+from lectionary.orthodox import OrthodoxLectionary
+from lectionary.rcl      import RevisedCommonLectionary
 
 import discord
 from discord.ext import commands, tasks
 
 import sqlite3
 import typing
+import re
 import datetime
 
 
@@ -25,10 +26,10 @@ class Lectionary(commands.Cog):
             'revised common']
 
         # Lectionary Objects
-        self.armenian = armenian.ArmenianLectionary()
-        self.catholic = catholic.CatholicLectionary()
-        self.orthodox = orthodox.OrthodoxLectionary()
-        self.rcl      = rcl.RevisedCommonLectionary()
+        self.armenian = ArmenianLectionary()
+        self.catholic = CatholicLectionary()
+        self.orthodox = OrthodoxLectionary()
+        self.rcl      = RevisedCommonLectionary()
 
         self.build_all_embeds()
 
@@ -109,39 +110,50 @@ class Lectionary(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def time(self, ctx, time:int=None, meridiem:str=None):      
-        if meridiem:
-            meridiem = meridiem.upper()
-            if meridiem in ['AM', 'PM']:
-                if meridiem == 'PM': time += 12
+    # async def time(self, ctx, time:int=None, meridiem:str=None):   
+    async def time(self, ctx, *, time=''):
+        if (time == ''):
+            now     = datetime.datetime.utcnow()
+            output  = now.strftime(f'It is currently: %A, %B {now.day}, %Y, %I:%M:%S %p (GMT).')
+            output += '\nYou can specify a time in GMT for the guild\'s subscriptions.'
+            await ctx.send(output)
+            return
+        
+        # If the user specified an integer, it's possibly 24-hour time
+        elif time in re.findall(r'[0-9]+', time): time = int(time)
+        # If a meridiem was possibly specified
+        else:
+            time = time.lower()
+            match = re.search(r'([0-9]+) *(am|pm)', time)
+            if match:
+                time = int(match.group(1))
+                if match.group(2) == 'pm': time += 12
             else:
                 await ctx.send('You didn\'t specify a valid time.')
                 return
         
-        # Constraints to help prevent loading the wrong lectionary
-        # for today due to timezone differences.
-        if 7 <= time <= 23:
-            guild_id = ctx.guild.id
+        if not(7 <= time <= 23):
+            await ctx.send('You need to specify a time from 7 AM to 11 PM GMT.')
+            return
 
-            conn = sqlite3.connect('data.db')
-            c    = conn.cursor()
-            c.execute('PRAGMA foreign_keys = ON')
+        guild_id = ctx.guild.id
 
-            c.execute('SELECT * FROM GuildSettings WHERE guild_id = ?', (guild_id,))
-            setting = c.fetchone()
+        conn = sqlite3.connect('data.db')
+        c    = conn.cursor()
+        c.execute('PRAGMA foreign_keys = ON')
 
-            if setting:
-                c.execute('UPDATE GuildSettings SET time = ? WHERE guild_id = ?', (time, guild_id))
-            else:
-                c.execute('INSERT INTO GuildSettings VALUES (?, ?)', (guild_id, time))
-            
-            conn.commit()
-            conn.close()
+        c.execute('SELECT * FROM GuildSettings WHERE guild_id = ?', (guild_id,))
+        setting = c.fetchone()
 
-            await ctx.send(f'The guild\'s subscriptions will come {time}:00 GMT daily.')
-
+        if setting:
+            c.execute('UPDATE GuildSettings SET time = ? WHERE guild_id = ?', (time, guild_id))
         else:
-            await ctx.send('You need to specify some time from 7 AM to 11 PM GMT.')
+            c.execute('INSERT INTO GuildSettings VALUES (?, ?)', (guild_id, time))
+        
+        conn.commit()
+        conn.close()
+
+        await ctx.send(f'The guild\'s subscriptions will come {time}:00 GMT daily.')
 
 
     @commands.command(aliases=['sub'])
@@ -231,6 +243,9 @@ class Lectionary(commands.Cog):
             conn.commit()
 
             await ctx.send(f'All subscriptions for {ctx.guild.name} have been removed.')
+        
+        else:
+            await ctx.send('You didn\'t specify a valid unsubscription option.')
 
         conn.close()
     
