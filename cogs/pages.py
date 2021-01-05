@@ -34,7 +34,7 @@ class Pages(commands.Cog):
         self.help_page.description += f'\n{pre}[subscribe|sub] [a|c|o|r] (#channel)'
         self.help_page.description += f'\n{pre}[unsubscribe|unsub] (#channel|all)'
         self.help_page.description += f'\n{pre}[subscriptions|subs]'
-        self.help_page.description += f'\n{pre}[time] [*hour*] (am|pm)'
+        self.help_page.description += f'\n{pre}[time] (*hour*)'
 
 
     @commands.command()
