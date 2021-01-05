@@ -26,7 +26,7 @@ class ArmenianLectionary:
     def regenerate_data(self):
         today = datetime.date.today()
         self.url = today.strftime(f'https://vemkar.us/%Y/%m/%d/%B-{today.day}-%Y')
-
+        
         r = requests.get(self.url)
         if r.status_code != 200:
             self.clear_data()
@@ -39,15 +39,14 @@ class ArmenianLectionary:
 
         readings = soup.select_one('h4[style]').text
 
-        substitutions = {'III ':'3 ','II ':'2 ','I ':'1 '}
+        substitutions = {'III ':'3 ','II ':'2 ','I ':'1 ','Azariah':'Prayer of Azariah'}
         for original in substitutions.keys():
             readings = readings.replace(original, substitutions[original])
         
         readings = readings.split('\n')
         readings = [f'<a>{reading}</a>' for reading in readings]
-        readings = '\n'.join(readings)
 
-        self.readings = readings
+        self.readings = '\n'.join(readings)
 
         # Get pages with additional lectionary notes, if they exist
         r = requests.get(today.strftime(f'https://vemkar.us/%B-{today.day}-%Y'))
@@ -65,13 +64,12 @@ class ArmenianLectionary:
 
 
     def build_embeds(self):
-        embed = Embed(title=self.title)
+        title = self.title + '\n' + self.desc
+        embed = Embed(title=title)
         embed.set_author(name='Armenian Lectionary', url=self.url)
-        embed.description = self.desc
 
         temp = bible_url.html_convert(self.readings)
-        if self.notes_url != '':
-            temp += f"\n\n*[Notes]({self.notes_url})"
-        embed.add_field(name='Readings', value=temp, inline=False)
+        if self.notes_url != '': temp += f"\n\n*[Notes]({self.notes_url})"
+        embed.description = temp
 
         return [embed]
