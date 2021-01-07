@@ -24,7 +24,7 @@ class OrthodoxLectionary:
 
 
     def regenerate_data(self):
-        today = datetime.datetime.today()
+        today = datetime.date.today()
         self.url = f'https://www.holytrinityorthodox.com/calendar/calendar.php?month={today.month}&today={today.day}&year={today.year}&dt=1&header=1&lives=1&trp=1&scripture=1'
 
         r = requests.get(self.url)
@@ -37,7 +37,7 @@ class OrthodoxLectionary:
         # Title & subtitles
         self.title     = soup.select_one('span[class="dataheader"]').text
         a              = soup.select_one('span[class="headerheader"]').text
-        b              = soup.select_one('span[class="headerfast"]').text
+        b              = soup.select_one('span[class="headerheader"]>span').text
         self.subtitles = [a.replace(b,''), b.strip()]
 
         # Saints
