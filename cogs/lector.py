@@ -309,11 +309,6 @@ class Lectionary(commands.Cog):
 
 
     async def push_subscriptions(self, hour):
-        # Make sure the cached lectionary embeds are updated for the day
-        if hour == 7:
-            self.regenerate_all_data()
-            self.build_all_embeds()
-
         await self._remove_deleted_guilds()
 
         conn = sqlite3.connect('data.db')
@@ -365,6 +360,8 @@ class Lectionary(commands.Cog):
     @commands.is_owner()
     async def push(self, ctx, current_hour:int=datetime.datetime.utcnow().hour):
         if 7 <= current_hour <= 23:
+            self.regenerate_all_data()
+            self.build_all_embeds()
             await self.push_subscriptions(current_hour)
 
 
@@ -375,6 +372,11 @@ class Lectionary(commands.Cog):
         # Push the current hour's subscriptions if they haven't been already
         current_hour = datetime.datetime.utcnow().hour
         if (7 <= current_hour <= 23) and (self.last_fufill != current_hour):
+            # Make sure the lectionary embeds are updated for the day
+            if (hour == 7):
+                self.regenerate_all_data()
+                self.build_all_embeds()
+
             await self.push_subscriptions(current_hour)
             self.last_fufill = current_hour
     
