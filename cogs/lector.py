@@ -3,6 +3,8 @@ from lectionary.catholic import CatholicLectionary
 from lectionary.orthodox import OrthodoxLectionary
 from lectionary.rcl      import RevisedCommonLectionary
 
+from helpers.logger import log
+
 import discord
 from discord.ext import commands, tasks
 
@@ -30,6 +32,7 @@ class Lectionary(commands.Cog):
         self.catholic = CatholicLectionary()
         self.orthodox = OrthodoxLectionary()
         self.rcl      = RevisedCommonLectionary()
+        log('Initial data fetch')
 
         self.build_all_embeds()
 
@@ -63,12 +66,15 @@ class Lectionary(commands.Cog):
         self.last_fufill = datetime.datetime.utcnow().hour
         self.fufill_subscriptions.start()
 
+        log('Bot booted')
+
     
     def regenerate_all_data(self):
         self.armenian.regenerate_data()
         self.catholic.regenerate_data()
         self.orthodox.regenerate_data()
         self.rcl.regenerate_data()
+        log('Lectionary data refetched')
 
 
     def build_all_embeds(self):
@@ -299,13 +305,19 @@ class Lectionary(commands.Cog):
 
         c.execute('SELECT guild_id FROM GuildSettings')
         guild_ids = [item[0] for item in c.fetchall()]
+        
+        total = len(guild_ids)
+        count = 0
 
         for guild_id in guild_ids:
             if not self.bot.get_guild(guild_id):
                 c.execute('DELETE FROM GuildSettings WHERE guild_id = ?', (guild_id ,))
+                count += 1
         
         conn.commit()
         conn.close()
+
+        log(f'Purged {count} out of {total} guilds')
 
 
     async def push_subscriptions(self, hour):
@@ -341,6 +353,8 @@ class Lectionary(commands.Cog):
         conn.commit()
         conn.close()
 
+        log(f'Pushed {len(subscriptions)} subscription(s) for {hour}:00 GMT')
+
 
     '''SYSTEM COMMANDS'''
 
@@ -353,12 +367,15 @@ class Lectionary(commands.Cog):
         '''
         self.fufill_subscriptions.stop()
         await ctx.message.add_reaction('✅')
+        log('Shutdown request, logging out')
         await ctx.bot.close()
 
 
     @commands.command()
     @commands.is_owner()
     async def push(self, ctx, current_hour:int=datetime.datetime.utcnow().hour):
+        log(f'Manual subscription push requested for {current_hour}:00 GMT')
+
         if 7 <= current_hour <= 23:
             self.regenerate_all_data()
             self.build_all_embeds()
@@ -376,6 +393,7 @@ class Lectionary(commands.Cog):
             if (hour == 7):
                 self.regenerate_all_data()
                 self.build_all_embeds()
+                log('Lectionary data refetched & cached')
 
             await self.push_subscriptions(current_hour)
             self.last_fufill = current_hour
