@@ -1,4 +1,5 @@
 from helpers import bot_config
+from helpers import logger
 
 from discord.ext import commands
 import os
@@ -18,8 +19,7 @@ for file in os.listdir('cogs'):
 
 
 @bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user}')
+async def on_ready(): logger.log(f'Logged in as "{bot.user}"')
 
 
 bot.run(config['token'])
