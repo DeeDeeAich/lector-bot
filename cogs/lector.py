@@ -66,7 +66,7 @@ class Lectionary(commands.Cog):
         self.last_fufill = datetime.datetime.utcnow().hour
         self.fufill_subscriptions.start()
 
-        log('Bot booted')
+        log(f'Bot booted; will not fufill subscriptions for today from {self.last_fufill}:00 GMT or prior')
 
     
     def regenerate_all_data(self):
@@ -124,7 +124,6 @@ class Lectionary(commands.Cog):
             output += '\nYou can specify a time in GMT for the guild\'s subscriptions.'
             await ctx.send(output)
             return
-        
         # If the user specified an integer, it's possibly 24-hour time
         elif time in re.findall(r'[0-9]+', time): time = int(time)
         # If a meridiem was possibly specified
@@ -388,12 +387,13 @@ class Lectionary(commands.Cog):
     async def fufill_subscriptions(self):
         # Push the current hour's subscriptions if they haven't been already
         current_hour = datetime.datetime.utcnow().hour
+        log(f'Subscription check for {current_hour}:00 GMT; last fufillment was {self.last_fufill}:00 GMT')
+
         if (7 <= current_hour <= 23) and (self.last_fufill != current_hour):
             # Make sure the lectionary embeds are updated for the day
-            if (hour == 7):
+            if (current_hour == 7):
                 self.regenerate_all_data()
                 self.build_all_embeds()
-                log('Lectionary data refetched & cached')
 
             await self.push_subscriptions(current_hour)
             self.last_fufill = current_hour
