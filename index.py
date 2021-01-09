@@ -19,7 +19,9 @@ for file in os.listdir('cogs'):
 
 
 @bot.event
-async def on_ready(): logger.log(f'Logged in as "{bot.user}"')
+async def on_ready():
+    print('Ready.')
+    logger.log(f'Logged in as "{bot.user}"')
 
 
 bot.run(config['token'])
