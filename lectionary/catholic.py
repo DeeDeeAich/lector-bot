@@ -19,10 +19,15 @@ class CatholicPage:
         self.url = url
 
         if source_text is None:
-            r = requests.get(url)
-            if r.status_code != 200:
+            try:
+                r = requests.get(url)
+                if r.status_code != 200:
+                    self.clear_data()
+                    return
+            except:
                 self.clear_data()
                 return
+            
             source_text = r.text
 
         soup = BeautifulSoup(source_text, 'html.parser')
@@ -76,6 +81,8 @@ class CatholicPage:
                     
                 lines = ' or\n'.join(lines)
                 self.sections[header] = lines
+        
+        self.ready = True
 
 
     def clear_data(self):
@@ -84,6 +91,7 @@ class CatholicPage:
         self.desc     = ''
         self.sections = {}
         self.footer   = ''
+        self.ready    = False
 
 
     def _clean_ref(self, reference):
@@ -187,6 +195,7 @@ class CatholicLectionary:
 
     def clear_data(self):
         self.pages = []
+        self.ready = False
 
 
     def regenerate_data(self):
@@ -194,35 +203,47 @@ class CatholicLectionary:
         Helper method that handles all the GET requests that are needed to get
         the pages that contain the appropriate lectionary info.
         '''
-
         permalink = datetime.date.today().strftime('https://bible.usccb.org/bible/readings/%m%d%y.cfm')
         
-        r = requests.get(permalink)
-        if r.status_code != 200:
+        try:
+            r = requests.get(permalink)
+            if r.status_code != 200:
+                self.clear_data()
+                return
+        except:
             self.clear_data()
             return
+
 
         soup = BeautifulSoup(r.text, 'html.parser')
         blocks = soup.select('.b-verse>div>div>div>div')
 
         # If the daily page is a standard readout
         if len(blocks) > 1:
-            self.pages = [CatholicPage(permalink, r.text)]
-            return
+            page = CatholicPage(permalink, r.text)
+            if page.ready:
+                self.pages = [page]
+        else:
+            # Otherwise, the daily page is a list of links to other pages
+            # Each page gets its own embed
+            base_url = 'https://bible.usccb.org'
+            anchors = soup.select('div[class="content-body"]>ul>li>a')
+            self.pages = []
+            for link in anchors:
+                link = link['href']
 
-        # Otherwise, the daily page is a list of links to other pages
-        # Each page gets its own embed
-        base_url = 'https://bible.usccb.org'
-        anchors = soup.select('div[class="content-body"]>ul>li>a')
-        self.pages = []
-        for link in anchors:
-            link = link['href']
+                # If the link is relative, make it absolute
+                if 'https://' != link[:8]:
+                    link = ''.join([base_url, link])
 
-            # If the link is relative, make it absolute
-            if 'https://' != link[:8]:
-                link = ''.join([base_url, link])
-
-            self.pages.append(CatholicPage(link))
+                page = CatholicPage(link)
+                if page.ready:
+                    self.pages.append(CatholicPage(link))
+                else:
+                    self.clear_data()
+                    return
+        
+        self.ready = True
 
 
     def build_embeds(self):
@@ -230,6 +251,8 @@ class CatholicLectionary:
         Helper method to construct a list of Discord embeds based upon the
         data scraped from the daily readings webpages
         '''
+        if not self.ready: return []
+
         embeds = []
 
         # For each page that was scraped

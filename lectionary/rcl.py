@@ -15,9 +15,10 @@ class RevisedCommonLectionary:
     
 
     def clear_data(self):
-        self.url         = ''
-        self.title       = ''
-        self.sections    = {}
+        self.url      = ''
+        self.title    = ''
+        self.sections = {}
+        self.ready    = False
 
 
     def _explode_reference_list(self, text):
@@ -42,8 +43,13 @@ class RevisedCommonLectionary:
 
     def regenerate_data(self):
         self.url = 'https://lectionary.library.vanderbilt.edu/daily.php'
-        r = requests.get(self.url)
-        if r.status_code != 200:
+        
+        try:
+            r = requests.get(self.url)
+            if r.status_code != 200:
+                self.clear_data()
+                return
+        except:
             self.clear_data()
             return
 
@@ -97,7 +103,13 @@ class RevisedCommonLectionary:
             match = re.search(r'<strong>(.*)<\/strong>: *<strong><a href="(.*)">(.*)<\/a><\/strong>', line)
             if match:
                 fetched = self._scrape_text_php(f'https://lectionary.library.vanderbilt.edu/{match.group(2)}')
-                self.sections[match[3]] = fetched
+                if (fetched == []):
+                    self.clear_data()
+                    return
+                else:
+                    self.sections[match[3]] = fetched
+
+        self.ready = True
     
 
     def _scrape_text_php(self, url):
@@ -106,8 +118,11 @@ class RevisedCommonLectionary:
         might link to another page containing a list of readings. This
         helper method scrapes from that.
         '''
-        r = requests.get(url)
-        if r.status_code != 200: return []
+        try:
+            r = requests.get(url)
+            if r.status_code != 200: return []
+        except:
+            return []
 
         soup = BeautifulSoup(r.text, 'html.parser')
 
@@ -128,6 +143,8 @@ class RevisedCommonLectionary:
         '''
         Function to convert daily lectionary info to discord.py Embed
         '''
+        if not self.ready: return []
+
         embed = Embed(title=self.title)
         embed.set_author(name='Revised Common Lectionary', url=self.url)
 

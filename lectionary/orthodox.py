@@ -21,14 +21,19 @@ class OrthodoxLectionary:
         self.saints    = []
         self.readings  = []
         self.troparion = {}
+        self.ready     = False
 
 
     def regenerate_data(self):
         today = datetime.date.today()
         self.url = f'https://www.holytrinityorthodox.com/calendar/calendar.php?month={today.month}&today={today.day}&year={today.year}&dt=1&header=1&lives=1&trp=1&scripture=1'
 
-        r = requests.get(self.url)
-        if r.status_code != 200:
+        try:
+            r = requests.get(self.url)
+            if r.status_code != 200:
+                self.clear_data()
+                return
+        except:
             self.clear_data()
             return
         
@@ -74,6 +79,8 @@ class OrthodoxLectionary:
         self.troparion = {}
         for key, value in zip(keys, values):
             self.troparion[key] = value
+        
+        self.ready = True
     
 
     def build_embeds(self):
@@ -81,7 +88,8 @@ class OrthodoxLectionary:
         "Public" function to construct a list of Discord Embeds representing
         the calendar data.
         '''
-        
+        if not self.ready: return []
+
         embeds = []
 
         # Title & Subtitles Embed

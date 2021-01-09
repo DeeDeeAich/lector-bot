@@ -21,14 +21,19 @@ class ArmenianLectionary:
         self.desc      = ''
         self.readings  = ''
         self.notes_url = ''
+        self.ready     = False
 
 
     def regenerate_data(self):
         today = datetime.date.today()
         self.url = today.strftime(f'https://vemkar.us/%Y/%m/%d/%B-{today.day}-%Y')
         
-        r = requests.get(self.url)
-        if r.status_code != 200:
+        try:
+            r = requests.get(self.url)
+            if r.status_code != 200:
+                self.clear_data()
+                return
+        except:
             self.clear_data()
             return
         
@@ -49,9 +54,13 @@ class ArmenianLectionary:
         self.readings = '\n'.join(readings)
 
         # Get pages with additional lectionary notes, if they exist
-        r = requests.get(today.strftime(f'https://vemkar.us/%B-{today.day}-%Y'))
-        if r.status_code != 200:
-            self.notes_url = ''
+        try:
+            r = requests.get(today.strftime(f'https://vemkar.us/%B-{today.day}-%Y'))
+            if r.status_code != 200:
+                self.clear_data()
+                return
+        except:
+            self.clear_data()
             return
         
         # If there was no redirect, this is a unique resource
@@ -61,9 +70,13 @@ class ArmenianLectionary:
         # If there was a redirect, everything was already scraped
         else:
             self.notes_url = ''
+        
+        self.ready = True
 
 
     def build_embeds(self):
+        if not self.ready: return []
+
         title = self.title + '\n' + self.desc
         embed = Embed(title=title)
         embed.set_author(name='Armenian Lectionary', url=self.url)
