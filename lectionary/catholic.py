@@ -39,6 +39,13 @@ class CatholicPage:
         for block in blocks:
             header = block.select_one('h3').text.strip()
 
+            if (header == ''):
+                # There is a glitch on the website where the 'Gospel' label
+                # will be missing from the page. None of the other labels
+                # appear to do that for whatever reason. It cannot be left
+                # empty because Discord embed field names must be non-empty.
+                header = 'Gospel'
+
             lines = []
             for link in block.select('a'):
                 link = link.text.strip()
