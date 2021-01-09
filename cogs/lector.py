@@ -17,7 +17,6 @@ import datetime
 class Lectionary(commands.Cog):
     def __init__(self, bot):
         self.bot         = bot
-        self.error_embed = discord.Embed(title='The lectionary could not be fetched', color=discord.Colour.red())
 
         # This list is for indexing-display purposes
         # In the database, 0 through 3 coorspond to these
@@ -90,24 +89,52 @@ class Lectionary(commands.Cog):
 
     @commands.command(aliases=['a', 'arm', 'armen'])
     async def armenian(self, ctx):
+        if not self.armenian.ready:
+            self.armenian.regenerate_data()
+            self.feeds[0] = self.armenian.build_embeds()
+            if not self.armenian.ready:
+                await ctx.message.add_reaction('❌')
+                return
+        
         for embed in self.feeds[0]:
             await ctx.send(embed=embed)
 
 
     @commands.command(aliases=['c', 'cath'])
     async def catholic(self, ctx):
+        if not self.catholic.ready:
+            self.catholic.regenerate_data()
+            self.feeds[1] = self.catholic.build_embeds()
+            if not self.catholic.ready:
+                await ctx.message.add_reaction('❌')
+                return
+        
         for embed in self.feeds[1]:
             await ctx.send(embed=embed)
 
 
     @commands.command(aliases=['o', 'orth', 'ortho'])
     async def orthodox(self, ctx):
+        if not self.orthodox.ready:
+            self.orthodox.regenerate_data()
+            self.feeds[2] = self.orthodox.build_embeds()
+            if not self.orthodox.ready:
+                await ctx.message.add_reaction('❌')
+                return
+
         for embed in self.feeds[2]:
             await ctx.send(embed=embed)
 
 
     @commands.command(aliases=['r', 'revised', 'prot', 'protestant'])
     async def rcl(self, ctx):
+        if not self.rcl.ready:
+            self.rcl.regenerate_data()
+            self.feeds[3] = self.rcl.build_embeds()
+            if not self.rcl.ready:
+                await ctx.message.add_reaction('❌')
+                return
+        
         for embed in self.feeds[3]:
             await ctx.send(embed=embed)
     
