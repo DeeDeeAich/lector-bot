@@ -378,7 +378,10 @@ class Lectionary(commands.Cog):
         if 7 <= current_hour <= 23:
             self.regenerate_all_data()
             self.build_all_embeds()
+            await ctx.message.add_reaction('✅')
             await self.push_subscriptions(current_hour)
+        else:
+            await ctx.message.add_reaction('❌')
 
 
     '''TASK LOOP'''
