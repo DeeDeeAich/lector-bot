@@ -60,7 +60,7 @@ class CatholicPage:
                 
                 # If a reference in the Responsorial Psalm section does not
                 # include "Ps", insert it at the beginning
-                if (header == 'Responsorial Psalm') and (not link.startswith('Ps')):
+                if (header == 'Responsorial Psalm') and (link[0] in list('0123456789')):
                     link = 'Ps ' + link
 
                 lines.append(link)
@@ -76,6 +76,9 @@ class CatholicPage:
                     elif link.startswith('See '):
                         new = lines[index][4:]
                         lines[index] = f'See <a>{self._clean_ref(new)}</a>'
+                    elif link.startswith('Cf '):
+                        new = lines[index][3:]
+                        lines[index] = f'Cf. <a>{self._clean_ref(new)}</a>'
                     else:
                         lines[index] = f'<a>{self._clean_ref(lines[index])}</a>'
                     
