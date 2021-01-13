@@ -417,7 +417,6 @@ class Lectionary(commands.Cog):
     async def fufill_subscriptions(self):
         # Push the current hour's subscriptions if they haven't been already
         current_hour = datetime.datetime.utcnow().hour
-        log(f'Subscription check for {current_hour}:00 GMT; last fufillment was {self.last_fufill}:00 GMT')
 
         if (7 <= current_hour <= 23) and (self.last_fufill != current_hour):
             # Make sure the lectionary embeds are updated for the day
