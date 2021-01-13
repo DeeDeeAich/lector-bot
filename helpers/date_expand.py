@@ -1,16 +1,20 @@
 import datetime
 
-suffixes = {'0':'th','1':'st','2':'nd','3':'rd','4':'th','5':'th','6':'th','7':'th','8':'th','9':'th'}
+def ordinal(day):
+    '''
+    Get the ordinal indicator for a day of the month
+    '''
+    indicators = {1:'st',2:'nd',3:'rd',21:'st',22:'nd',23:'rd',31:'st'}
+    if day in indicators: return indicators[day]
+    else:                 return 'th'
 
 def expand(dateobject):
     '''Given a date object, returns a specially formatted string representing it w/ the weekday'''
-    suffix = suffixes[str(dateobject.day)[-1]]
-    return dateobject.strftime(f'%A, %B {dateobject.day}{suffix}, %Y')
+    return dateobject.strftime(f'%A, %B {dateobject.day}{ordinal(dateobject.day)}, %Y')
 
 def expand_no_weekday(dateobject):
     '''Given a date object, returns a specially formatted string representing it w/o the weekday'''
-    suffix = suffixes[str(dateobject.day)[-1]]
-    return dateobject.strftime(f'%B {dateobject.day}{suffix}, %Y')
+    return dateobject.strftime(f'%B {dateobject.day}{ordinal(dateobject.day)}, %Y')
 
 def auto_expand(dateobject, text):
     '''
