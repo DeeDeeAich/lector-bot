@@ -11,10 +11,13 @@ def convert(reference):
 
     # Get rid of letter subreferences in verses
     # Ex: '1 Samuel 2:8ABCD' is cleaned to '1 Samuel 2:8'
-    results = re.findall(r'[0-9]+([a-zA-Z]+)', reference)
-    for result in results:
-        reference = reference.replace(result, '')
-        anchor    = anchor.replace(result, result.lower())
+    temp    = reference
+    pattern = r'([0-9]+)([a-zA-Z]+)'
+    match   = re.search(pattern, temp)
+    while match:
+        reference = reference.replace(match.group(0), match.group(1))
+        temp      = temp[match.span()[1]:]
+        match     = re.search(pattern, temp)
     
     reference = reference.replace(' ', '+')
     
@@ -26,7 +29,7 @@ def html_convert(text):
     Converts a string with anchored Bible references to Markdown
 
     In: "God creates everything in <a>Genesis 1:1</a>"
-    Out: "God creates everything in [Genesis 1:1](https://www.blahblah.com)
+    Out: "God creates everything in [Genesis 1:1](https://www.example.com)"
     '''
     matches = re.findall(r'(<a>([^<>]*)<\/a>)', text)
     for match in matches:
