@@ -2,6 +2,8 @@ from helpers import bot_config
 from helpers import logger
 
 from discord.ext import commands
+import discord
+
 import os
 
 
@@ -20,6 +22,7 @@ for file in os.listdir('cogs'):
 
 @bot.event
 async def on_ready():
+    await bot.change_presence(activity=discord.Game(name=f"{config['prefix']}help"))
     print('Ready.')
     logger.log(f'Logged in as "{bot.user}"')
 
